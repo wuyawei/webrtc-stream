@@ -19,6 +19,7 @@
   "dependencies": {
     "koa": "^2.0.0",
     "koa-send": "^5.0.0",
+    "koa-socket": "^4.4.0",
     "koa-static": "^5.0.0"
   }
 }
