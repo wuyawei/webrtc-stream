@@ -38,12 +38,25 @@ app.use(async (ctx, next) => {
         await next();
     }
 });
-io.on('random', ctx=>{ // event data socket.id
-    console.log('value',ctx.data);
-    ctx.socket.emit('warn', ctx.data);
-});
-app.io.on('connection', (ctx) => {
-    console.log(`connection id =>${ctx.socket.id} ip =>${ctx.socket.request.connection.remoteAddress}`);
+// io.on('join', ctx=>{ // event data socket.id
+// });
+app._io.on( 'connection', sock => {
+    sock.on('join', data=>{
+        sock.join(data.roomid, () => {
+            console.log('value',data);
+            app._io.in(data.roomid).emit('joined',data.account);
+            sock.emit('en', 'ok');
+        });
+    });
+    sock.on('offer', data=>{
+        sock.to(data.roomid).emit('offer',data.sdp);
+    });
+    sock.on('answer', data=>{
+        sock.to(data.roomid).emit('answer',data.sdp);
+    });
+    sock.on('__ice_candidate', data=>{
+        sock.to(data.roomid).emit('__ice_candidate',data.candidate);
+    });
 });
 app.io.on('disconnect', (ctx) => {
     console.log(`disconnect id =>${ctx.socket.id}`);

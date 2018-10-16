@@ -13,7 +13,7 @@ export default new Router({
             component: Home,
         },
         {
-            path: '/room/:roomid',
+            path: '/room/:roomid/:account',
             name: 'room',
             component: room
         }

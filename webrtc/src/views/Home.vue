@@ -1,8 +1,9 @@
 <template>
     <div class="home">
         <div class="center">
-            房间号：<input type="text" v-model="roomid">
-            <router-link :to="{name: 'room', params: {roomid: roomid}}">加入房间</router-link>
+            登录名：<input type="text" v-model="account"> <br>
+            房间号：<input type="text" v-model="roomid"> <br>
+            <button @click="join">加入房间</button>
         </div>
     </div>
 </template>
@@ -12,11 +13,16 @@
         name: 'home',
         data() {
             return {
-                roomid: ''
+                roomid: '',
+                account: ''
             }
         },
         methods: {
-
+            join() {
+                if (this.account && this.roomid) {
+                    this.$router.push({name: 'room', params: {roomid: this.roomid, account: this.account}})
+                }
+            }
         }
     };
 </script>
