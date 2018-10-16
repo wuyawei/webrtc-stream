@@ -18,10 +18,10 @@ const io = new socket({
 const app = new Koa();
 // socket注入应用
 io.attach(app);
-
 app.use(static(
     path.join( __dirname,  './public')
 ));
+
 // 对于任何请求，app将调用该异步函数处理请求：
 app.use(async (ctx, next) => {
     if (!/\./.test(ctx.request.url)) {
@@ -44,7 +44,8 @@ app._io.on( 'connection', sock => {
     sock.on('join', data=>{
         sock.join(data.roomid, () => {
             console.log('value',data);
-            app._io.in(data.roomid).emit('joined',data.account);
+            //app._io.in(data.roomid).emit('joined',data.account);
+            sock.to(data.roomid).emit('joined',data.account);
             sock.emit('en', 'ok');
         });
     });

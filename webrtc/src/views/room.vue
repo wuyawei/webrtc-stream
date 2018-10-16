@@ -14,7 +14,7 @@
         data() {
             return {
                 roomid: '',
-                peer: null
+                pper: null
             }
         },
         methods: {
@@ -40,6 +40,7 @@
                 this.pper = new PeerConnection(iceServer);
                 //发送ICE候选到其他客户端
                 this.pper.onicecandidate = (event) => {
+                    console.log('send-candidate');
                     socket.emit('__ice_candidate', {'candidate': event.candidate, roomid: this.$route.params.roomid});
                 };
                 //如果检测到媒体流连接到本地，将其绑定到一个video标签上输出
@@ -55,7 +56,6 @@
                     //绑定本地媒体流到video标签用于输出
                     myVideo.srcObject = stream;
                     //向PeerConnection中加入需要发送的流
-                    console.log('add-stream', stream);
                     this.pper.addStream(stream);
                     this.socketInit();
                 }, function(error){
@@ -77,13 +77,14 @@
                         });
                     };
                 if (this.$route.params.account === 'aaa') {
-                    this.pper.onnegotiationneeded = () => {
-                        this.pper.createOffer().then(sendOfferFn);
-                    };
+                    this.pper.createOffer({
+                        offerToReceiveAudio: 1,
+                        offerToReceiveVideo: 1
+                    }).then(sendOfferFn);
                 }
                 socket.on('offer', sdp => {
                     console.log('offer', sdp);
-                    this.pper.setRemoteDescription(new RTCSessionDescription(sdp), () => {
+                    this.pper.setRemoteDescription(sdp, () => {
                         this.pper.createAnswer().then(sendAnswerFn);
                     }, (err) => {console.log(err)});
                 });
@@ -93,16 +94,19 @@
             socket.emit('join', {roomid: this.$route.params.roomid, account: this.$route.params.account});
             socket.on('joined', account=>{
                 console.log('joined', account);
+                this.pper.onicecandidate = (event) => {
+                    socket.emit('__ice_candidate', {'candidate': event.candidate, roomid: this.$route.params.roomid});
+                };
             });
             socket.on('answer', sdp => {
                 console.log('answer', sdp);
-                this.pper.setRemoteDescription(new RTCSessionDescription(sdp), function(){}, (err) => {console.log(err)});
+                this.pper.setRemoteDescription(sdp, function(){}, (err) => {console.log(err)});
             });
             socket.on('__ice_candidate', candidate => {
-                console.log('__ice_candidate', candidate);
-                //如果是一个ICE的候选，则将其加入到PeerConnection中，否则设定对方的session描述为传递过来的描述
+                console.log('take_candidate', candidate);
+                //如果是一个ICE的候选，则将其加入到PeerConnection中
                 if (candidate) {
-                    this.pper.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.log('err', e));
+                    this.pper.addIceCandidate(candidate).catch(e => console.log('err', e));
                 }
             });
             socket.on('en', ok=>{
