@@ -7,6 +7,7 @@ const path = require('path');
 const koaSend = require('koa-send');
 const static = require('koa-static');
 const socket = require('koa-socket');
+const users = {};
 const io = new socket({
     ioOptions: {
         pingTimeout: 10000,
@@ -43,10 +44,17 @@ app.use(async (ctx, next) => {
 app._io.on( 'connection', sock => {
     sock.on('join', data=>{
         sock.join(data.roomid, () => {
-            console.log('value',data);
-            //app._io.in(data.roomid).emit('joined',data.account);
-            sock.to(data.roomid).emit('joined',data.account);
-            sock.emit('en', 'ok');
+            console.log('value',sock.id);
+            if (!users[data.roomid]) {
+                users[data.roomid] = [];
+            }
+            let obj = {
+                name: data.account,
+                id: sock.id
+            };
+            users[data.roomid].push(obj);
+            app._io.in(data.roomid).emit('joined', users[data.roomid]); // 发给房间内所有人
+            // sock.to(data.roomid).emit('joined',data.account);
         });
     });
     sock.on('offer', data=>{
@@ -61,8 +69,15 @@ app._io.on( 'connection', sock => {
         // console.log('__ice_candidate', data);
         sock.to(data.roomid).emit('__ice_candidate',data.candidate);
     });
+    sock.on('__ice_candidatepeer', data=>{
+        // console.log('__ice_candidate', data);
+        sock.to(data.roomid).emit('__ice_candidatepeer',data.candidate);
+    });
 });
 app.io.on('disconnect', (ctx) => {
+    for (let k in users) {
+        users[k] = users[k].filter(v => v.id !== ctx.socket.id);
+    };
     console.log(`disconnect id =>${ctx.socket.id}`);
 });
 
