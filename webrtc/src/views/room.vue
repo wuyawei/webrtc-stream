@@ -44,7 +44,7 @@
                 //发送ICE候选到其他客户端
                 //如果检测到媒体流连接到本地，将其绑定到一个video标签上输出
                 this.pper.onaddstream = function(event){
-                    console.log('event-stream', event);
+//                    console.log('event-stream', event);
                     if (otherVideo) {
                         otherVideo.srcObject = event.stream;
                     }
@@ -71,19 +71,19 @@
                         resolve();
                     }, function(error){
                         reject(error);
-                        console.log(error);
+                        // console.log(error);
                         //处理媒体流创建失败错误
                     });
                 })
             },
             sendOfferFn(desc) {
-                console.log('send-offer', desc);
+                // console.log('send-offer', desc);
                 this.pper.setLocalDescription(desc, () => {
                     socket.emit('offer', {'sdp': this.pper.localDescription, roomid: this.$route.params.roomid});
                 });
             },
             sendAnswerFn(desc) {
-                console.log('send-answer', desc);
+                // console.log('send-answer', desc);
                 this.pper.setLocalDescription(desc, () => {
                     socket.emit('answer', {'sdp': this.pper.localDescription, roomid: this.$route.params.roomid});
                 });
@@ -125,34 +125,38 @@
             this.$nextTick(() => {
                 socket.emit('join', {roomid: this.$route.params.roomid, account: this.$route.params.account});
                 socket.on('offer', sdp => {
-                    console.log('take_offer', sdp);
+                    // console.log('take_offer', sdp);
                     this.pper.setRemoteDescription(sdp, () => {
                         this.pper.createAnswer().then(this.sendAnswerFn);
-                    }, (err) => {console.log(err)});
+                    }, () => {// console.log(err)
+                        });
                 });
                 socket.on('answer', sdp => {
-                    console.log('take_answer', sdp);
-                    this.pper.setRemoteDescription(sdp, function(){}, (err) => {console.log(err)});
+                    // console.log('take_answer', sdp);
+                    this.pper.setRemoteDescription(sdp, function(){}, () => {// console.log(err)
+                        });
                 });
                 socket.on('__ice_candidate', candidate => {
-                    console.log('take_candidate', candidate);
+                    // console.log('take_candidate', candidate);
                     //如果是一个ICE的候选，则将其加入到PeerConnection中
                     if (candidate) {
-                        this.pper.addIceCandidate(candidate).catch(e => console.log('err', e));
+                        this.pper.addIceCandidate(candidate).catch(() => {}// console.log('err', e)
+                        );
                     }
                 });
                 socket.on('__ice_candidatepeer', candidate => {
-                    console.log('take_candidate', candidate);
+                    // console.log('take_candidate', candidate);
                     //如果是一个ICE的候选，则将其加入到PeerConnection中
                     if (candidate) {
-                        this.peer1.addIceCandidate(candidate).catch(e => console.log('err', e));
+                        this.peer1.addIceCandidate(candidate).catch(() => {}// console.log('err', e)
+                         );
                     }
                 });
                 socket.on('joined', data=>{
-                    console.log('joined', data);
+                    // console.log('joined', data);
                     this.init().then(() => {
                         socket.emit('__ice_candidate', {'candidate': this.candidate, roomid: this.$route.params.roomid});
-                        if (this.$route.params.account === 'aaa') {
+                        if (data.length === 2) {
                             this.socketInit();
                         }
                     });
