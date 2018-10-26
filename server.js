@@ -49,35 +49,41 @@ app._io.on( 'connection', sock => {
                 users[data.roomid] = [];
             }
             let obj = {
-                name: data.account,
+                account: data.account,
                 id: sock.id
             };
-            users[data.roomid].push(obj);
-            app._io.in(data.roomid).emit('joined', users[data.roomid]); // 发给房间内所有人
+            let arr = users[data.roomid].filter(v => v.account === data.account);
+            if (!arr.length) {
+                users[data.roomid].push(obj);
+            }
+            app._io.in(data.roomid).emit('joined', users[data.roomid], data.account, sock.id); // 发给房间内所有人
             // sock.to(data.roomid).emit('joined',data.account);
         });
     });
     sock.on('offer', data=>{
         // console.log('offer', data);
-        sock.to(data.roomid).emit('offer',data.sdp);
+        sock.to(data.roomid).emit('offer',data);
     });
     sock.on('answer', data=>{
         // console.log('answer', data);
-        sock.to(data.roomid).emit('answer',data.sdp);
+        sock.to(data.roomid).emit('answer',data);
     });
     sock.on('__ice_candidate', data=>{
         // console.log('__ice_candidate', data);
-        sock.to(data.roomid).emit('__ice_candidate',data.candidate);
+        sock.to(data.roomid).emit('__ice_candidate',data);
     });
-    sock.on('__ice_candidatepeer', data=>{
-        // console.log('__ice_candidate', data);
-        sock.to(data.roomid).emit('__ice_candidatepeer',data.candidate);
-    });
+    sock.on('leave', data => {
+        sock.leave(data.roomid, () => {
+            console.log(data);
+            //users[data.roomid] = users[data.roomid].filter(v => v.account !== data.account);
+            sock.to(data.roomid).emit('leaved', users[data.roomid]);
+        });
+    })
 });
 app.io.on('disconnect', (ctx) => {
     for (let k in users) {
         users[k] = users[k].filter(v => v.id !== ctx.socket.id);
-    };
+    }
     console.log(`disconnect id =>${ctx.socket.id}`);
 });
 

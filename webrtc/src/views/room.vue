@@ -1,8 +1,7 @@
 <template>
     <div class="room">
-        <div class="video-box">
+        <div class="video-box" ref="video-box">
             <video class="video-mine" autoplay controls ref="video-mine"></video>
-            <video class="video-other" autoplay controls ref="video-other"></video>
         </div>
     </div>
 </template>
@@ -14,50 +13,35 @@
         data() {
             return {
                 roomid: '',
-                pper: null,
-                peer1: null,
-                candidate: null
+                peer: null,
+                peerList: {},
+                candidate: null,
+                localStream: null
+            }
+        },
+        watch: {
+            userList: {
+                handler(list) {
+
+                },
+                deep: true
+            }
+        },
+        beforeDestroy() {
+            socket.emit('leave', {roomid: this.$route.params.roomid, account: this.$route.params.account});
+            for (let k in this.peerList) {
+                this.peerList[k].close();
+                this.peerList[k] = null;
             }
         },
         methods: {
-            init() {
-                let myVideo = this.$refs['video-mine'];
-                let otherVideo = this.$refs['video-other'];
-                let iceServer = {
-                    "iceServers": [{
-                        "url": "stun:stun.l.google.com:19302"
-                    }]
-                };
+            getUserMedia() {
                 //兼容浏览器的getUserMedia写法
+                let myVideo = this.$refs['video-mine'];
                 let getUserMedia = (navigator.getUserMedia ||
                     navigator.webkitGetUserMedia ||
                     navigator.mozGetUserMedia ||
                     navigator.msGetUserMedia);
-                //兼容浏览器的PeerConnection写法
-                let PeerConnection = (window.PeerConnection ||
-                    window.webkitPeerConnection00 ||
-                    window.webkitRTCPeerConnection ||
-                    window.mozRTCPeerConnection);
-                //
-                this.pper = new PeerConnection(iceServer);
-//                this.peer1 = new PeerConnection(iceServer);
-                //发送ICE候选到其他客户端
-                //如果检测到媒体流连接到本地，将其绑定到一个video标签上输出
-                this.pper.onaddstream = function(event){
-//                    console.log('event-stream', event);
-                    if (otherVideo) {
-                        otherVideo.srcObject = event.stream;
-                    }
-                };
-                this.pper.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        this.candidate = event.candidate;
-                    }
-                };
-//                this.peer1.onaddstream = function(event){
-//                    console.log('event-stream', event);
-//                    otherVideo.srcObject = event.stream;
-//                };
                 //获取本地的媒体流，并绑定到一个video标签上输出，并且发送这个媒体流给其他客户端
                 return new Promise((resolve, reject) => {
                     getUserMedia.call(navigator, {
@@ -66,9 +50,8 @@
                     }, (stream) => {
                         //绑定本地媒体流到video标签用于输出
                         myVideo.srcObject = stream;
-                        //向PeerConnection中加入需要发送的流
-                        this.pper.addStream(stream);
-                        resolve();
+                        this.localStream = stream;
+                        resolve(stream);
                     }, function(error){
                         reject(error);
                         // console.log(error);
@@ -76,95 +59,114 @@
                     });
                 })
             },
-            sendOfferFn(desc) {
-                // console.log('send-offer', desc);
-                this.pper.setLocalDescription(desc, () => {
-                    socket.emit('offer', {'sdp': this.pper.localDescription, roomid: this.$route.params.roomid});
-                });
+            getPeerConnection(v) {
+                let videoBox = this.$refs['video-box'];
+                let iceServer = {
+                    "iceServers": [
+                        {
+                            "url": "stun:stun.l.google.com:19302"
+                        },
+                        {
+                            "url": "turn:120.77.253.101:3478",
+                            "username": "inter_user",
+                            "credential": "power_turn"
+                        }
+                    ]
+                };
+                //兼容浏览器的PeerConnection写法
+                let PeerConnection = (window.PeerConnection ||
+                    window.webkitPeerConnection00 ||
+                    window.webkitRTCPeerConnection ||
+                    window.mozRTCPeerConnection);
+                // 创建
+                let peer = new PeerConnection(iceServer);
+                //向PeerConnection中加入需要发送的流
+                peer.addStream(this.localStream);
+
+                //如果检测到媒体流连接到本地，将其绑定到一个video标签上输出
+                peer.onaddstream = function(event){
+                    console.log('event-stream', event);
+                    let video = document.createElement('video');
+                    video.controls = true;
+                    video.autoplay = 'autoplay';
+                    video.srcObject = event.stream;
+                    video.id = v.id;
+                    videoBox.append(video);
+                };
+                //发送ICE候选到其他客户端
+                peer.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.emit('__ice_candidate', {'candidate': event.candidate, roomid: this.$route.params.roomid, id: v.id});
+                    }
+                };
+                this.peerList[v.id] = peer;
             },
-            sendAnswerFn(desc) {
-                // console.log('send-answer', desc);
-                this.pper.setLocalDescription(desc, () => {
-                    socket.emit('answer', {'sdp': this.pper.localDescription, roomid: this.$route.params.roomid});
+            createOffer(id, peer) {
+                //发送offer，发送本地session描述
+                peer.createOffer({
+                    offerToReceiveAudio: 1,
+                    offerToReceiveVideo: 1
+                }).then((desc) => {
+                    console.log('send-offer', desc);
+                    peer.setLocalDescription(desc, () => {
+                        socket.emit('offer', {'sdp': peer.localDescription, roomid: this.$route.params.roomid, id: id});
+                    });
                 });
             },
             socketInit() {
-//                this.pper.onicecandidate = (event) => {
-//                    socket.emit('__ice_candidate', {'candidate': event.candidate, roomid: this.$route.params.roomid});
-////                    this.peer1.addIceCandidate(event.candidate).catch(e => console.log('err', e));
-//                };
-//                this.peer1.onicecandidate = (event) => {
-////                    this.pper.addIceCandidate(event.candidate).catch(e => console.log('err', e));
-//                    socket.emit('__ice_candidatepeer', {'candidate': event.candidate, roomid: this.$route.params.roomid});
-//                };
-                //发送offer和answer的函数，发送本地session描述
-                this.pper.createOffer({
-                    offerToReceiveAudio: 1,
-                    offerToReceiveVideo: 1
-                }).then(this.sendOfferFn);
-                //////////////
-//                console.log('createOffer');
-//                this.pper.createOffer({
-//                    offerToReceiveAudio: 1,
-//                    offerToReceiveVideo: 1
-//                }).then((desc) => {
-//                    this.pper.setLocalDescription(desc, () => {
-//                        this.peer1.setRemoteDescription(desc, () => {
-//                            this.peer1.createAnswer().then((desc1) => {
-//                                this.peer1.setLocalDescription(desc1, () => {
-//                                    this.pper.setRemoteDescription(desc1, function(){}, (err) => {console.log(err)});
-//                                });
-//                            });
-//                        }, (err) => {console.log(err)});
-//                    });
-//                });
-                ///////////////
+                socket.on('leaved', data => {
+                    console.log('leaved', data);
+                });
+                socket.on('offer', v => {
+                     console.log('take_offer', this.peerList[v.id]);
+                    this.peerList[v.id].setRemoteDescription(v.sdp, () => {
+                        this.peerList[v.id].createAnswer().then((desc) => {
+                            console.log('send-answer', desc);
+                            this.peerList[v.id].setLocalDescription(desc, () => {
+                                socket.emit('answer', {'sdp': this.peerList[v.id].localDescription, roomid: this.$route.params.roomid, id: v.id});
+                            });
+                        });
+                    }, () => {// console.log(err)
+                    });
+                });
+                socket.on('answer', v => {
+                     console.log('take_answer', v.sdp);
+                    this.peerList[v.id].setRemoteDescription(v.sdp, function(){}, () => {// console.log(err)
+                    });
+                });
+                socket.on('__ice_candidate', v => {
+                     console.log('take_candidate', v.candidate);
+                    //如果是一个ICE的候选，则将其加入到PeerConnection中
+                    if (v.candidate) {
+                        this.peerList[v.id].addIceCandidate(v.candidate).catch(() => {}// console.log('err', e)
+                        );
+                    }
+                });
             }
         },
         mounted() {
             this.$nextTick(() => {
-                socket.emit('join', {roomid: this.$route.params.roomid, account: this.$route.params.account});
-                socket.on('offer', sdp => {
-                    // console.log('take_offer', sdp);
-                    this.pper.setRemoteDescription(sdp, () => {
-                        this.pper.createAnswer().then(this.sendAnswerFn);
-                    }, () => {// console.log(err)
+                this.getUserMedia().then(() => {
+                    socket.emit('join', {roomid: this.$route.params.roomid, account: this.$route.params.account});
+                });
+                this.socketInit();
+                socket.on('joined', (data, account, id)=>{
+                    console.log('joined', data);
+                    if (data.length> 1) {
+                        data.forEach(v => {
+                            if (!this.peerList[v.id]) {
+                                this.getPeerConnection(v);
+                            }
                         });
-                });
-                socket.on('answer', sdp => {
-                    // console.log('take_answer', sdp);
-                    this.pper.setRemoteDescription(sdp, function(){}, () => {// console.log(err)
-                        });
-                });
-                socket.on('__ice_candidate', candidate => {
-                    // console.log('take_candidate', candidate);
-                    //如果是一个ICE的候选，则将其加入到PeerConnection中
-                    if (candidate) {
-                        this.pper.addIceCandidate(candidate).catch(() => {}// console.log('err', e)
-                        );
-                    }
-                });
-                socket.on('__ice_candidatepeer', candidate => {
-                    // console.log('take_candidate', candidate);
-                    //如果是一个ICE的候选，则将其加入到PeerConnection中
-                    if (candidate) {
-                        this.peer1.addIceCandidate(candidate).catch(() => {}// console.log('err', e)
-                         );
-                    }
-                });
-                socket.on('joined', data=>{
-                    // console.log('joined', data);
-                    this.init().then(() => {
-                        socket.emit('__ice_candidate', {'candidate': this.candidate, roomid: this.$route.params.roomid});
-                        if (data.length === 2) {
-                            this.socketInit();
+                        if (account === this.$route.params.account) {
+                            console.log('account', account);
+                            for (let k in this.peerList) {
+                                if (id !== k) {
+                                    this.createOffer(k, this.peerList[k]);
+                                }
+                            }
                         }
-                    });
-//                    if (data.length > 1) {
-//                        this.init().then(() => {
-//                            this.socketInit();
-//                        });
-//                    }
+                    }
                 });
             });
         }
@@ -178,9 +180,11 @@
     .video-box{
         display: flex;
         justify-content: flex-start;
+        flex-wrap: wrap;
         video{
-            width:600px;
-            height: 400px;
+            width:400px;
+            height: 300px;
+            margin-right: 10px;
         }
     }
 </style>

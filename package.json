@@ -7,8 +7,7 @@
     "start": "node server.js"
   },
   "keywords": [
-    "koa",
-    "async"
+    "koa"
   ],
   "author": "Michael Liao",
   "license": "Apache-2.0",
@@ -20,6 +19,7 @@
     "koa": "^2.0.0",
     "koa-send": "^5.0.0",
     "koa-socket": "^4.4.0",
-    "koa-static": "^5.0.0"
+    "koa-static": "^5.0.0",
+    "ylru": "^1.2.1"
   }
 }
