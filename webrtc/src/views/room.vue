@@ -142,6 +142,13 @@
                         );
                     }
                 });
+                socket.on('disconnected', id => {
+                    console.log('disconnected', id);
+                    let dom = document.querySelector('#' + id);
+                    if (dom) {
+                        dom.remove();
+                    }
+                })
             }
         },
         mounted() {

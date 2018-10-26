@@ -80,10 +80,11 @@ app._io.on( 'connection', sock => {
         });
     })
 });
-app.io.on('disconnect', (ctx) => {
+app._io.on('disconnect', (sock) => {
     for (let k in users) {
-        users[k] = users[k].filter(v => v.id !== ctx.socket.id);
+        users[k] = users[k].filter(v => v.id !== sock.id);
     }
+    sock.broadcast.emit('disconnected', sock.id);
     console.log(`disconnect id =>${ctx.socket.id}`);
 });
 
