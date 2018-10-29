@@ -21,8 +21,7 @@
         },
         watch: {
             userList: {
-                handler(list) {
-
+                handler() {
                 },
                 deep: true
             }
@@ -86,22 +85,28 @@
                 //如果检测到媒体流连接到本地，将其绑定到一个video标签上输出
                 peer.onaddstream = function(event){
                     console.log('event-stream', event);
-                    let video = document.createElement('video');
-                    video.controls = true;
-                    video.autoplay = 'autoplay';
-                    video.srcObject = event.stream;
-                    video.id = v.id;
-                    videoBox.append(video);
+                    let videos = document.querySelector('#' + v.account);
+                    if (videos) {
+                        videos.srcObject = event.stream;
+                    } else {
+                        let video = document.createElement('video');
+                        video.controls = true;
+                        video.autoplay = 'autoplay';
+                        video.srcObject = event.stream;
+                        video.id = v.account;
+                        videoBox.append(video);
+                    }
                 };
                 //发送ICE候选到其他客户端
                 peer.onicecandidate = (event) => {
                     if (event.candidate) {
-                        socket.emit('__ice_candidate', {'candidate': event.candidate, roomid: this.$route.params.roomid, id: v.id});
+                        socket.emit('__ice_candidate', {'candidate': event.candidate, roomid: this.$route.params.roomid, account: v.account});
                     }
                 };
-                this.peerList[v.id] = peer;
+                console.log('v.account', v.account);
+                this.peerList[v.account] = peer;
             },
-            createOffer(id, peer) {
+            createOffer(account, peer) {
                 //发送offer，发送本地session描述
                 peer.createOffer({
                     offerToReceiveAudio: 1,
@@ -109,21 +114,18 @@
                 }).then((desc) => {
                     console.log('send-offer', desc);
                     peer.setLocalDescription(desc, () => {
-                        socket.emit('offer', {'sdp': peer.localDescription, roomid: this.$route.params.roomid, id: id});
+                        socket.emit('offer', {'sdp': peer.localDescription, roomid: this.$route.params.roomid, account: account});
                     });
                 });
             },
             socketInit() {
-                socket.on('leaved', data => {
-                    console.log('leaved', data);
-                });
                 socket.on('offer', v => {
-                     console.log('take_offer', this.peerList[v.id]);
-                    this.peerList[v.id].setRemoteDescription(v.sdp, () => {
-                        this.peerList[v.id].createAnswer().then((desc) => {
+                     console.log('take_offer', this.peerList[v.account]);
+                    this.peerList[v.account].setRemoteDescription(v.sdp, () => {
+                        this.peerList[v.account].createAnswer().then((desc) => {
                             console.log('send-answer', desc);
-                            this.peerList[v.id].setLocalDescription(desc, () => {
-                                socket.emit('answer', {'sdp': this.peerList[v.id].localDescription, roomid: this.$route.params.roomid, id: v.id});
+                            this.peerList[v.account].setLocalDescription(desc, () => {
+                                socket.emit('answer', {'sdp': this.peerList[v.account].localDescription, roomid: this.$route.params.roomid, account: v.account});
                             });
                         });
                     }, () => {// console.log(err)
@@ -131,14 +133,14 @@
                 });
                 socket.on('answer', v => {
                      console.log('take_answer', v.sdp);
-                    this.peerList[v.id].setRemoteDescription(v.sdp, function(){}, () => {// console.log(err)
+                    this.peerList[v.account].setRemoteDescription(v.sdp, function(){}, () => {// console.log(err)
                     });
                 });
                 socket.on('__ice_candidate', v => {
                      console.log('take_candidate', v.candidate);
                     //如果是一个ICE的候选，则将其加入到PeerConnection中
                     if (v.candidate) {
-                        this.peerList[v.id].addIceCandidate(v.candidate).catch(() => {}// console.log('err', e)
+                        this.peerList[v.account].addIceCandidate(v.candidate).catch(() => {}// console.log('err', e)
                         );
                     }
                 });
@@ -157,20 +159,25 @@
                     socket.emit('join', {roomid: this.$route.params.roomid, account: this.$route.params.account});
                 });
                 this.socketInit();
-                socket.on('joined', (data, account, id)=>{
+                socket.on('joined', (data, account)=>{
                     console.log('joined', data);
                     if (data.length> 1) {
                         data.forEach(v => {
-                            if (!this.peerList[v.id]) {
-                                this.getPeerConnection(v);
+                            let obj = {};
+                            if (v.account > this.$route.params.account) {
+                                obj.account = v.account + this.$route.params.account;
+                            } else {
+                                obj.account = this.$route.params.account + v.account;
+                            }
+                            if (!this.peerList[obj.account] && v.account !== this.$route.params.account) {
+                                console.log('obj', obj);
+                                this.getPeerConnection(obj);
                             }
                         });
                         if (account === this.$route.params.account) {
                             console.log('account', account);
                             for (let k in this.peerList) {
-                                if (id !== k) {
-                                    this.createOffer(k, this.peerList[k]);
-                                }
+                                this.createOffer(k, this.peerList[k]);
                             }
                         }
                     }

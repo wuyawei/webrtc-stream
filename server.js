@@ -84,8 +84,7 @@ app._io.on('disconnect', (sock) => {
     for (let k in users) {
         users[k] = users[k].filter(v => v.id !== sock.id);
     }
-    sock.broadcast.emit('disconnected', sock.id);
-    console.log(`disconnect id =>${ctx.socket.id}`);
+    console.log(`disconnect id => ${users}`);
 });
 
 // 在端口3001监听:
