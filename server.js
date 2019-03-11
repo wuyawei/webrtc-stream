@@ -43,7 +43,6 @@ app.use(async (ctx, next) => {
 app._io.on( 'connection', sock => {
     sock.on('join', data=>{
         sock.join(data.roomid, () => {
-            console.log('value',sock.id);
             if (!users[data.roomid]) {
                 users[data.roomid] = [];
             }
@@ -73,7 +72,7 @@ app._io.on( 'connection', sock => {
     });
     sock.on('leave', data => {
         sock.leave(data.roomid, () => {
-            console.log(data);
+            console.log('lllllllllll', data);
             //users[data.roomid] = users[data.roomid].filter(v => v.account !== data.account);
             sock.to(data.roomid).emit('leaved', users[data.roomid]);
         });

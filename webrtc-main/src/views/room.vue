@@ -116,7 +116,7 @@
             socketInit() {
                 socket.on('offer', v => {
                      // console.log('take_offer', this.peerList[v.account]);
-                    this.peerList[v.account].setRemoteDescription(v.sdp, () => {
+                    this.peerList[v.account] && this.peerList[v.account].setRemoteDescription(v.sdp, () => {
                         this.peerList[v.account].createAnswer().then((desc) => {
                             // console.log('send-answer', desc);
                             this.peerList[v.account].setLocalDescription(desc, () => {
@@ -127,15 +127,15 @@
                     });
                 });
                 socket.on('answer', v => {
-                     // console.log('take_answer', v.sdp);
-                    this.peerList[v.account].setRemoteDescription(v.sdp, function(){}, () => {// console.log(err)
+                    console.log('take_answer', v.sdp);
+                    this.peerList[v.account] && this.peerList[v.account].setRemoteDescription(v.sdp, function(){}, () => {// console.log(err)
                     });
                 });
                 socket.on('__ice_candidate', v => {
                      // console.log('take_candidate', v.candidate);
                     //如果是一个ICE的候选，则将其加入到PeerConnection中
                     if (v.candidate) {
-                        this.peerList[v.account].addIceCandidate(v.candidate).catch(() => {}// console.log('err', e)
+                        this.peerList[v.account] && this.peerList[v.account].addIceCandidate(v.candidate).catch(() => {}// console.log('err', e)
                         );
                     }
                 });
@@ -155,7 +155,7 @@
                 });
                 this.socketInit();
                 socket.on('joined', (data, account)=>{
-                    // console.log('joined', data);
+                    console.log('joined', data);
                     if (data.length> 1) {
                         data.forEach(v => {
                             let obj = {};
