@@ -1,9 +1,8 @@
 <template>
     <div class="home">
         <div class="center">
-            登录名：<input type="text" v-model="account"> <br>
-            房间号：<input type="text" v-model="roomid"> <br>
-            <button @click="join">加入房间</button>
+            <div><router-link :to="{name: 'demo'}">api演示</router-link></div>
+            <div><router-link :to="{name: 'many'}">多人聊天</router-link></div>
         </div>
     </div>
 </template>
@@ -13,32 +12,38 @@
         name: 'home',
         data() {
             return {
-                roomid: '',
-                account: ''
-            }
-        },
-        methods: {
-            join() {
-                if (this.account && this.roomid) {
-                    this.$router.push({name: 'room', params: {roomid: this.roomid, account: this.account}})
-                }
             }
         }
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
     .home{
         text-align: center;
     }
     .center{
-        width:500px;
-        height: 400px;
-        position: absolute;
-        left:0;
-        top:0;
-        bottom:0;
-        right:0;
+        width:200px;
         margin: auto;
+        font-size: 18px;
+        border: 1px solid #ddd;
+        margin-top: 200px;
+        a{
+            color: #323232;
+        }
+        div{
+            line-height: 48px;
+            border-bottom: 1px solid #ddd;
+            cursor: pointer;
+        }
+        div:last-child{
+            border-bottom: none;
+        }
+        div:hover{
+            background-color: #25b25e;
+            a{
+                display: block;
+                color: #fff;
+            }
+        }
     }
 </style>

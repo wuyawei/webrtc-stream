@@ -68,8 +68,7 @@
                     ]
                 };
                 //兼容浏览器的PeerConnection写法
-                let PeerConnection = (window.PeerConnection ||
-                    window.webkitPeerConnection00 ||
+                let PeerConnection = (window.RTCPeerConnection ||
                     window.webkitRTCPeerConnection ||
                     window.mozRTCPeerConnection);
                 // 创建
