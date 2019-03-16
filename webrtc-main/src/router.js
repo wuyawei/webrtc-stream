@@ -5,6 +5,7 @@ import room from './views/room.vue';
 import many from './views/many.vue';
 import demo from './views/demo.vue';
 import Speech from './views/Speech.vue';
+import transfer from './views/transfer.vue';
 
 Vue.use(Router);
 
@@ -34,6 +35,11 @@ export default new Router({
             path: '/Speech',
             name: 'Speech',
             component: Speech
+        },
+        {
+            path: '/transfer',
+            name: 'transfer',
+            component: transfer
         }
     ],
 });
