@@ -18,12 +18,9 @@
 
 <script>
     export default {
-        name: 'demo',
+        name: 'local1',
         data() {
             return {
-                newRecognition: null,
-                text: '',
-                state: '1',
                 peerA: null,
                 peerB: null,
                 offerOption: {
@@ -44,11 +41,11 @@
                 this.newRecognition.stop();
             },
             async call() {
-                if (!this.peerA || !this.peerB) {
+                if (!this.peerA || !this.peerB) { // 判断是否有对应实例，没有就重新创建
                     this.initPeer();
                 }
                 try {
-                    let offer = await this.peerA.createOffer(this.offerOption);
+                    let offer = await this.peerB.createOffer(this.offerOption); // 创建 offer
                     await this.onCreateOffer(offer);
                 } catch (e) {
                     console.log('createOffer: ', e);
@@ -67,17 +64,17 @@
             },
             async onCreateOffer(desc) {
                 try {
-                    await this.peerA.setLocalDescription(desc);
+                    await this.peerB.setLocalDescription(desc); // 呼叫端设置本地 offer 描述
                 } catch (e) {
                     console.log('Offer-setLocalDescription: ', e);
                 }
                 try {
-                    await this.peerB.setRemoteDescription(desc);
+                    await this.peerA.setRemoteDescription(desc); // 接收端设置远程 offer 描述
                 } catch (e) {
                     console.log('Offer-setRemoteDescription: ', e);
                 }
                 try {
-                    let answer = await this.peerB.createAnswer();
+                    let answer = await this.peerA.createAnswer(); // 接收端创建 answer
                     await this.onCreateAnswer(answer);
                 } catch (e) {
                     console.log('createAnswer: ', e);
@@ -85,12 +82,12 @@
             },
             async onCreateAnswer(desc) {
                 try {
-                    await this.peerB.setLocalDescription(desc);
+                    await this.peerA.setLocalDescription(desc); // 接收端设置本地 answer 描述
                 } catch (e) {
                     console.log('answer-setLocalDescription: ', e);
                 }
                 try {
-                    await this.peerA.setRemoteDescription(desc);
+                    await this.peerB.setRemoteDescription(desc); // 呼叫端端设置远程 answer 描述
                 } catch (e) {
                     console.log('answer-setRemoteDescription: ', e);
                 }
@@ -99,7 +96,9 @@
                 // 创建输出端 PeerConnection
                 let PeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
                 this.peerA = new PeerConnection();
-                this.peerA.addStream(this.localstream);
+                this.peerA.addStream(this.localstream); // 添加本地流
+                // 监听 A 的ICE候选信息
+                // 如果收集到，就添加给 B
                 this.peerA.onicecandidate = (event) => {
                     if (event.candidate) {
                         this.peerB.addIceCandidate(event.candidate);
@@ -107,11 +106,13 @@
                 };
                 // 创建呼叫端
                 this.peerB = new PeerConnection();
-                this.peerB.onaddstream = (event) => {
+                this.peerB.onaddstream = (event) => { // 监听是否有媒体流接入，如果有就赋值给 rtcB 的 src
                     console.log('event-stream', event);
                     let video = document.querySelector('#rtcB');
                     video.srcObject = event.stream;
                 };
+                // 监听 B 的ICE候选信息
+                // 如果收集到，就添加给 A
                 this.peerB.onicecandidate = (event) => {
                     if (event.candidate) {
                         this.peerA.addIceCandidate(event.candidate);
@@ -128,8 +129,8 @@
                     // console.log(stream.getVideoTracks(), stream.getAudioTracks());
                     let video = document.querySelector('#rtcA');
                     video.srcObject = stream;
-                    this.localstream = stream;
-                    this.initPeer();
+                    this.localstream = stream; // 保存到全局
+                    this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
                 })
             });
         }

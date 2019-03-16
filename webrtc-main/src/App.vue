@@ -28,5 +28,6 @@
     height: 32px;
     width: 300px;
     margin-bottom: 5px;
+    padding-left: 10px;
   }
 </style>

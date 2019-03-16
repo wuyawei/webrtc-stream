@@ -3,9 +3,10 @@ import Router from 'vue-router';
 import Home from './views/Home.vue';
 import room from './views/room.vue';
 import many from './views/many.vue';
-import demo from './views/demo.vue';
+import local1 from './views/local1.vue';
 import Speech from './views/Speech.vue';
 import transfer from './views/transfer.vue';
+import remote1 from './views/remote1.vue';
 
 Vue.use(Router);
 
@@ -27,9 +28,9 @@ export default new Router({
             component: many
         },
         {
-            path: '/demo',
-            name: 'demo',
-            component: demo
+            path: '/local1',
+            name: 'local1',
+            component: local1
         },
         {
             path: '/Speech',
@@ -40,6 +41,11 @@ export default new Router({
             path: '/transfer',
             name: 'transfer',
             component: transfer
+        },
+        {
+            path: '/remote1',
+            name: 'remote1',
+            component: remote1
         }
     ],
 });
