@@ -2,10 +2,6 @@
     <div class="demo">
         <video src="" id="rtc" controls autoplay></video>
         <!--<audio src="" id="voice" controls autoplay></audio>-->
-        <!--<br>-->
-        <!--<button @click="start">{{state === '1' ? '开始' : state === '2' ? '识别中···' : ''}}</button>-->
-        <!--<button @click="stop" v-show = "state === '2'">结束</button>-->
-        <!--<textarea name="" id="" cols="30" rows="10" v-model="text"></textarea>-->
     </div>
 </template>
 
@@ -30,7 +26,7 @@
             }
         },
         mounted() {
-            this.$nextTick(_ => {
+            this.$nextTick(() => {
                 // {mediaSource: 'screen'}
                 navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
                     // console.log(stream);
@@ -41,22 +37,6 @@
 //                    audio.srcObject = stream;
                 })
             });
-//            this.newRecognition = new webkitSpeechRecognition();
-//            this.newRecognition.continuous = true;
-//            this.newRecognition.onresult = function(event) {
-//                console.log(event);
-//            };
-//            this.newRecognition.onerror = function(event) {
-//                console.log(event);
-//            };
-//            this.newRecognition.onstart = function(event) {
-//                console.log(event);
-//            };
-//
-//            this.newRecognition.onspeechend = function(event) {
-//                console.log(event);
-//            };
-//            new window.SpeechSynthesisUtterance('你好，世界！'); // 文字转语音
         }
     };
 </script>
