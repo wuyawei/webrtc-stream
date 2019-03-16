@@ -1,10 +1,10 @@
 <template>
     <div class="home">
         <div class="center">
-            <div><router-link :to="{name: 'Speech'}">语音识别</router-link></div>
-            <div><router-link :to="{name: 'transfer'}">video标签之间的流传输</router-link></div>
-            <div><router-link :to="{name: 'demo'}">WebRTC 本地演示</router-link></div>
-            <div><router-link :to="{name: 'many'}">多人聊天</router-link></div>
+            <div><router-link :to="{name: 'Speech'}">H5 语音识别</router-link></div>
+            <div><router-link :to="{name: 'transfer'}">video 标签之间的流传输</router-link></div>
+            <div><router-link :to="{name: 'demo'}">WebRTC 本地对等连接</router-link></div>
+            <!--<div><router-link :to="{name: 'many'}">多人聊天</router-link></div>-->
         </div>
     </div>
 </template>
