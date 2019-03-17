@@ -6,7 +6,8 @@ const path = require('path');
 const koaSend = require('koa-send');
 const static = require('koa-static');
 const socket = require('koa-socket');
-const users = {};
+const users = {}; // 保存用户
+const sockS = {}; // 保存客户端对应的socket
 const io = new socket({
     ioOptions: {
         pingTimeout: 10000,
@@ -54,6 +55,7 @@ app._io.on( 'connection', sock => {
             if (!arr.length) {
                 users[data.roomid].push(obj);
             }
+            sockS[data.account] = sock;
             app._io.in(data.roomid).emit('joined', users[data.roomid], data.account, sock.id); // 发给房间内所有人
             // sock.to(data.roomid).emit('joined',data.account);
         });
@@ -72,11 +74,15 @@ app._io.on( 'connection', sock => {
     });
     sock.on('leave', data => {
         sock.leave(data.roomid, () => {
-            console.log('lllllllllll', data);
-            //users[data.roomid] = users[data.roomid].filter(v => v.account !== data.account);
             sock.to(data.roomid).emit('leaved', users[data.roomid]);
         });
-    })
+    });
+    sock.on('apply', data=>{
+        sockS[data.account].emit('apply', data);
+    });
+    sock.on('reply', data=>{
+        sockS[data.account].emit('reply', data);
+    });
 });
 app._io.on('disconnect', (sock) => {
     for (let k in users) {

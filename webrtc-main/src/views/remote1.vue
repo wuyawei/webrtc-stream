@@ -1,5 +1,10 @@
 <template>
-    <div class="remote1">
+    <div class="remote1"
+         v-loading="loading"
+         :element-loading-text="loadingText"
+         element-loading-spinner="el-icon-loading"
+         element-loading-background="rgba(0, 0, 0, 0.8)"
+    >
         <div class="shade" v-if="!isJoin">
             <div class="input-container">
                 <input type="text" v-model="account" placeholder="请输入你的昵称" @keyup.enter="join">
@@ -9,10 +14,23 @@
         <div class="userList">
             <h5>在线用户：{{userList.length}}</h5>
             <p v-for="v in userList">
-                {{v.account}}{{v.account === account ? ' --- 自己' : ''}}
-                {{v.account === isCall ? ' --- 正在通话' : ''}}
+                {{v.account}}
+                <i v-if="v.account === account || v.account === isCall">
+                {{v.account === account ? 'me' : ''}}
+                {{v.account === isCall ? 'calling' : ''}}
+                </i>
                 <span @click="apply(v.account)" v-if="v.account !== account && v.account !== isCall">呼叫 {{v.account}}</span>
             </p>
+        </div>
+        <div class="video-container">
+            <div>
+                <video src="" id="rtcA" controls autoplay></video>
+                <h5>{{account}}</h5>
+            </div>
+            <div>
+                <video src="" id="rtcB" controls autoplay></video>
+                <h5>{{isCall}}</h5>
+            </div>
         </div>
     </div>
 </template>
@@ -26,7 +44,9 @@
                 isJoin: false,
                 userList: [],
                 roomid: 'webrtc_1v1',
-                isCall: false
+                isCall: false,
+                loading: false,
+                loadingText: '呼叫中'
             };
         },
         methods: {
@@ -38,11 +58,10 @@
             },
             init() {
                 socket.on('joined', (data) =>{
-                    console.log('joined', data);
                     this.userList = data;
                 });
                 socket.on('reply', data =>{ // 收到回复
-                    console.log('onreply', data);
+                    this.loading = false;
                     switch (data.type) {
                         case '1': // 同意
                             this.isCall = data.self;
@@ -86,6 +105,7 @@
             },
             apply(account) {
                 // account 对方account self 是自己的account
+                this.loading = true;
                 socket.emit('apply', {account: account, self: this.account});
             },
             reply(account, type) {
@@ -100,7 +120,13 @@
         }
     }
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
+    .remote1{
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: flex-start;
+    }
     .shade{
         position: fixed;
         width:100vw;
@@ -123,10 +149,8 @@
         }
     }
     .userList{
-        position: absolute;
-        left:10px;
-        top:20px;
         border: 1px solid #ddd;
+        margin-right: 50px;
         h5{
             text-align: left;
             margin-bottom: 5px;
@@ -149,12 +173,35 @@
                 display: block;
                 width: 100%;
             }
+            i{
+                font-style: normal;
+                font-size: 11px;
+                border: 1px solid #1fbeca;
+                color: #27cac7;
+                border-radius: 2px;
+                line-height: 1;
+                display: block;
+                position: absolute;
+                padding: 1px 2px;
+                right: 5px;
+                top: 5px;
+            }
         }
         p:last-child{
           border-bottom: none;
         }
         p:hover span{
             top:0;
+        }
+    }
+    .video-container{
+        display: flex;
+        justify-content: center;
+        video{
+            width: 400px;
+            height: 300px;
+            margin-left: 20px;
+            background-color: #ddd;
         }
     }
 </style>
