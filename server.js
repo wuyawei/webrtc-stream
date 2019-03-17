@@ -72,16 +72,25 @@ app._io.on( 'connection', sock => {
         // console.log('__ice_candidate', data);
         sock.to(data.roomid).emit('__ice_candidate',data);
     });
-    sock.on('leave', data => {
-        sock.leave(data.roomid, () => {
-            sock.to(data.roomid).emit('leaved', users[data.roomid]);
-        });
-    });
-    sock.on('apply', data=>{
+
+    // 1 v 1
+    sock.on('apply', data=>{ // 转发申请
         sockS[data.account].emit('apply', data);
     });
-    sock.on('reply', data=>{
+    sock.on('reply', data=>{ // 转发回复
         sockS[data.account].emit('reply', data);
+    });
+    sock.on('1v1answer', data=>{ // 转发 answer
+        sockS[data.account].emit('1v1answer', data);
+    });
+    sock.on('1v1ICE', data=>{ // 转发 ICE
+        sockS[data.account].emit('1v1ICE', data);
+    });
+    sock.on('1v1offer', data=>{ // 转发 Offer
+        sockS[data.account].emit('1v1offer', data);
+    });
+    sock.on('1v1hangup', data=>{ // 转发 hangup
+        sockS[data.account].emit('1v1hangup', data);
     });
 });
 app._io.on('disconnect', (sock) => {

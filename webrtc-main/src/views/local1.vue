@@ -87,7 +87,7 @@
                     console.log('answer-setLocalDescription: ', e);
                 }
                 try {
-                    await this.peerB.setRemoteDescription(desc); // 呼叫端端设置远程 answer 描述
+                    await this.peerB.setRemoteDescription(desc); // 呼叫端设置远程 answer 描述
                 } catch (e) {
                     console.log('answer-setRemoteDescription: ', e);
                 }
@@ -119,19 +119,21 @@
                     }
                 };
                 this.allowCall = false;
+            },
+            async createMedia() {
+                // 保存本地流到全局
+                this.localstream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                // console.log(this.localstream);
+                // console.log(this.localstream.getVideoTracks(), this.localstream.getAudioTracks());
+                let video = document.querySelector('#rtcA');
+                video.srcObject = this.localstream;
+                this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
             }
         },
         mounted() {
             this.$nextTick(() => {
                 // {mediaSource: 'screen'}
-                navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
-                    // console.log(stream);
-                    // console.log(stream.getVideoTracks(), stream.getAudioTracks());
-                    let video = document.querySelector('#rtcA');
-                    video.srcObject = stream;
-                    this.localstream = stream; // 保存到全局
-                    this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
-                })
+                this.createMedia();
             });
         }
     };

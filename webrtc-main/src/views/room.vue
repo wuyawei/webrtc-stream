@@ -27,7 +27,6 @@
             }
         },
         beforeDestroy() {
-            socket.emit('leave', {roomid: this.$route.params.roomid, account: this.$route.params.account});
             for (let k in this.peerList) {
                 this.peerList[k].close();
                 this.peerList[k] = null;

@@ -1,5 +1,8 @@
 <template>
     <div class="home">
+        <div class="fork-me-on-github">
+            <a href="https://github.com/wuyawei" target="_blank"></a>
+        </div>
         <div class="center">
             <div><router-link :to="{name: 'Speech'}">H5 语音识别</router-link></div>
             <div><router-link :to="{name: 'transfer'}">video 标签之间的流传输</router-link></div>
@@ -46,6 +49,21 @@
                 display: block;
                 color: #fff;
             }
+        }
+    }
+
+    .fork-me-on-github{
+        width: 150px;
+        height: 150px;
+        background-image: url("../assets/github.png");
+        position: absolute;
+        right: 0;
+        top:0;
+        background-size: contain;
+        a{
+            display: block;
+            width: 150px;
+            height: 150px;
         }
     }
 </style>
