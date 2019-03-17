@@ -53,8 +53,8 @@
     }
 
     .fork-me-on-github{
-        width: 150px;
-        height: 150px;
+        width: 120px;
+        height: 120px;
         background-image: url("../assets/github.png");
         position: absolute;
         right: 0;
