@@ -92,13 +92,11 @@
                             break;
                     }
                 });
-                socket.on('apply', data =>{ // 收到请求
-//                    console.log(this.isCall);
+                socket.on('apply', data => { // 收到请求
                     if (this.isCall) {
                         this.reply(data.self, '3');
                         return;
                     }
-//                    console.log('onapply', data);
                     this.$confirm(data.self + ' 向你请求视频通话, 是否同意?', '提示', {
                         confirmButtonText: '同意',
                         cancelButtonText: '拒绝',
@@ -139,7 +137,7 @@
                 this.isCall = false;
             },
             apply(account) {
-                // account 对方account self 是自己的account
+                // account 对方account  self 是自己的account
                 this.loading = true;
                 this.loadingText = '呼叫中';
                 socket.emit('apply', {account: account, self: this.account});
