@@ -36,7 +36,7 @@
     </div>
 </template>
 <script>
-    import socket from '../socket';
+    import socket from '../../utils/socket';
     export default{
         name: 'remote1',
         data() {
