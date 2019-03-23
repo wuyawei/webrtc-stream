@@ -26,12 +26,25 @@
 <style lang="scss" scoped>
     .home{
         text-align: center;
+        > a{
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 120px;
+            height: 120px;
+            z-index: 1;
+            background-image: url("../assets/github.png");
+            background-size: contain;
+            background-position: 10px -8px;
+            background-repeat: no-repeat;
+        }
     }
     .center{
         margin: auto;
         font-size: 18px;
         border: 1px solid #ddd;
         margin-top: 100px;
+        position: relative;
         a{
             color: #323232;
         }
@@ -53,17 +66,14 @@
     }
 
     .fork-me-on-github{
-        width: 120px;
-        height: 120px;
-        background-image: url("../assets/github.png");
+        width: 0;
+        height: 0;
         position: absolute;
         right: 0;
         top:0;
-        background-size: contain;
-        a{
-            display: block;
-            width: 150px;
-            height: 150px;
-        }
+        border-right: 60px solid rgba(37, 178, 94, 0.8);
+        border-top: 60px solid rgba(37, 178, 94, 0.8);
+        border-bottom: 60px solid #fff;
+        border-left: 60px solid #fff;
     }
 </style>
