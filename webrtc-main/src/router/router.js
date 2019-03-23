@@ -40,6 +40,11 @@ export default new Router({
             path: '/remote1',
             name: 'remote1',
             component: _import('webrtc/remote1')
+        },
+        {
+            path: '/communication',
+            name: 'communication',
+            component: _import('communication/communication')
         }
     ],
 });
