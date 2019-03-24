@@ -1,12 +1,6 @@
 import Vue from 'vue';
 import Router from 'vue-router';
-import Home from './views/Home.vue';
-import room from './views/room.vue';
-import many from './views/many.vue';
-import local1 from './views/local1.vue';
-import Speech from './views/Speech.vue';
-import transfer from './views/transfer.vue';
-import remote1 from './views/remote1.vue';
+import _import from './_import';
 
 Vue.use(Router);
 
@@ -15,37 +9,42 @@ export default new Router({
         {
             path: '/',
             name: 'home',
-            component: Home,
+            component: _import('Home'),
         },
         {
             path: '/room/:roomid/:account',
             name: 'room',
-            component: room
+            component: _import('webrtc/room')
         },
         {
             path: '/many',
             name: 'many',
-            component: many
+            component: _import('webrtc/many')
         },
         {
             path: '/local1',
             name: 'local1',
-            component: local1
+            component: _import('webrtc/local1')
         },
         {
             path: '/Speech',
             name: 'Speech',
-            component: Speech
+            component: _import('webrtc/Speech')
         },
         {
             path: '/transfer',
             name: 'transfer',
-            component: transfer
+            component: _import('webrtc/transfer')
         },
         {
             path: '/remote1',
             name: 'remote1',
-            component: remote1
+            component: _import('webrtc/remote1')
+        },
+        {
+            path: '/communication',
+            name: 'communication',
+            component: _import('communication/communication')
         }
     ],
 });

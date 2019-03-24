@@ -7,7 +7,7 @@
 </template>
 
 <script>
-    import socket from '../socket';
+    import socket from '../../utils/socket';
     export default {
         name: 'home',
         data() {
