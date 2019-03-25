@@ -13,7 +13,7 @@
         </div>
         <div class="userList">
             <h5>在线用户：{{userList.length}}</h5>
-            <p v-for="v in userList">
+            <p v-for="v in userList" :key="v.account">
                 {{v.account}}
                 <i v-if="v.account === account || v.account === isCall">
                 {{v.account === account ? 'me' : ''}}
@@ -118,7 +118,7 @@
                 socket.on('1v1offer', (data) =>{ // 接收到 offer
                     this.onOffer(data);
                 });
-                socket.on('1v1hangup', (data) =>{ // 通话挂断
+                socket.on('1v1hangup', _ =>{ // 通话挂断
                     this.$message({
                         message: '对方已断开连接！',
                         type: 'warning'

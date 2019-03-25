@@ -25,6 +25,9 @@ module.exports = {
     chainWebpack: config => {
         // 解决 cli3 热更新失效 https://github.com/vuejs/vue-cli/issues/1559
         config.resolve
-        .symlinks(true)
+        .symlinks(true);
+        config
+        .entry('index')
+        .add('babel-polyfill');
     }
 };
