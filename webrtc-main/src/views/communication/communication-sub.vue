@@ -1,7 +1,7 @@
 <template>
     <div class="communication-sub">
         <p>我是 communication-sub</p>
-        <input v-bind="$attrs" v-model="title" v-on="$listeners">
+        <input v-bind="$attrs" v-model="title" v-on="$listeners"></input>
         <communication-min-sub></communication-min-sub>
         <!--v-on="$listeners"-->
     </div>

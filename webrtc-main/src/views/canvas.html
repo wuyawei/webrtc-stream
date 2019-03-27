@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>画布</title>
-    <script src="class.canvas.js"></script>
 </head>
 <style>
     canvas{
@@ -68,10 +67,12 @@
         let x=e.offsetX;
         let y=e.offsetY;
         let last = [x, y];
-        paint.beginPath();
-        paint.arc(x,y,5,0,Math.PI*2,false);
-        paint.closePath();
-        paint.fill();
+        if (type === 'line') {
+            paint.beginPath();
+            paint.arc(x,y,5,0,Math.PI*2,false);
+            paint.closePath();
+            paint.fill();
+        }
         this.onmousemove=function (e) {
         	let ox=e.offsetX;
             let oy=e.offsetY;
@@ -83,13 +84,8 @@
                 paint.beginPath()
                 paint.arc(ox,oy,5,0,2*Math.PI);
                 paint.clip();
-                paint.clearRect(0,0,canvas.width,canvas.height);
+                paint.clearRect(0,0,10,10);
                 paint.restore();
-	        }else{
-//        	    paint.clearRect(0,0,canvas.width,canvas.height);
-        	    if(arr.length>=1){
-	            	paint.putImageData(arr[arr.length-1],0,0);
-	            }
 	        }
 //          paint.strokeRect(x,y,width,height)
 			switch (type){
@@ -106,8 +102,10 @@
 					paint.fillStyle=linear;
 					break;
 				case "line":
-
 					paint.beginPath();
+                    paint.lineCap = "round";
+                    // 设定线条与线条间接合处的样式
+                    paint.lineJoin = "round";
 					paint.lineWidth=10;
 					paint.strokeStyle=color; // 红色路径
 					paint.moveTo(last[0],last[1]);
@@ -147,22 +145,25 @@
 					paint.beginPath();
 					for(var i=0;i<n;i++){
 						paint.lineTo(x+Math.sin((i*ran+45)*Math.PI/180)*rn,y+Math.cos((i*ran+45)*Math.PI/180)*rn)
-					}					
+					}
 					paint.closePath();
 					paint.fillStyle=color;
 					paint.fill();
 					break;
 			}
         }
-        this.onmouseup=function () {
-            this.onmousemove=null;
-            if(type=="letter"){
-            	var pro=prompt();
-            	paint.font="30px";
-            	paint.fillText(pro,x,y);
+        let that = this;
+        document.onmouseup=function () {
+            if (that.onmousemove) {
+                that.onmousemove=null;
+                if(type=="letter"){
+                    var pro=prompt();
+                    paint.font="30px";
+                    paint.fillText(pro,x,y);
+                }
+                imgdata=paint.getImageData(0,0,canvas.width,canvas.height)
+                arr.push(imgdata)
             }
-			imgdata=paint.getImageData(0,0,canvas.width,canvas.height)
-			arr.push(imgdata)
         }
     }
     let btn =document.querySelector(".btn");
@@ -172,6 +173,7 @@
     let butt=document.querySelectorAll("input[type=button]");
     btn.onclick=function(){
     	arr.pop();
+    	console.log('111', arr);
     	if(arr.length<1){
     		alert("不能再退了！");
     		paint.clearRect(0,0,canvas.width,canvas.height);

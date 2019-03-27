@@ -9,6 +9,12 @@
             <div><router-link :to="{name: 'remote1'}">WebRTC  1 v 1 网络对等连接</router-link></div>
             <div><router-link :to="{name: 'communication'}">组件间通信</router-link></div>
             <!--<div><router-link :to="{name: 'many'}">多人聊天</router-link></div>-->
+            <div @click="handelClick">click</div>
+            <ul>
+                <li v-for="v in sdata">
+                    {{v.name}}
+                </li>
+            </ul>
         </div>
     </div>
 </template>
@@ -18,7 +24,14 @@
         name: 'home',
         data() {
             return {
+                sdata: []
             }
+        },
+        watch: {
+        },
+        methods: {
+        },
+        mounted() {
         }
     };
 </script>
