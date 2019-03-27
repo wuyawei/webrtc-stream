@@ -9,12 +9,7 @@
             <div><router-link :to="{name: 'remote1'}">WebRTC  1 v 1 网络对等连接</router-link></div>
             <div><router-link :to="{name: 'communication'}">组件间通信</router-link></div>
             <!--<div><router-link :to="{name: 'many'}">多人聊天</router-link></div>-->
-            <div @click="handelClick">click</div>
-            <ul>
-                <li v-for="v in sdata">
-                    {{v.name}}
-                </li>
-            </ul>
+            <div><router-link :to="{name: 'palette'}">共享画板</router-link></div>
         </div>
     </div>
 </template>
