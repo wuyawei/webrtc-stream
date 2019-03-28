@@ -13,7 +13,7 @@ class Palette {
         this.y = 0; // 鼠标按下时的 y 坐标
         this.last = [this.x, this.y]; // 鼠标按下及每次移动后的坐标
         this.drawType = 'line'; // 绘制形状
-        this.drawColor = '#000'; // 绘制颜色
+        this.drawColor = 'rgba(19, 206, 102, 1)'; // 绘制颜色
         this.lineWidth = 10; // 线条宽度
         this.bindCall = function () {}; // 解决 eventlistener 不能bind
         this.init();
@@ -21,9 +21,7 @@ class Palette {
     init() {
         this.canvas.addEventListener('mousedown', this.mousedown.bind(this));
         document.addEventListener('mouseup', this.onmouseup.bind(this));
-        this.paint.fillStyle = '#fff';
-        this.paint.fillRect(0, 0, this.width, this.height);
-        this.bindCall = this.onmousemove.bind(this);
+        this.bindCall = this.onmousemove.bind(this); // 解决 eventlistener 不能bind
     }
     mousedown(e) { // 鼠标按下
         this.isClickCanvas = true;
@@ -48,6 +46,24 @@ class Palette {
         switch (this.drawType) {
             case 'line' :
                 this.line(now);
+                break;
+            case 'rect' :
+                this.rect(now);
+                break;
+            case 'poly' :
+                this.poly(now);
+                break;
+            case 'arc' :
+                this.arc(now);
+                break;
+            case 'eraser' :
+                this.eraser(now);
+                break;
+            case 'cancel' :
+                this.cancel(now);
+                break;
+            case 'go' :
+                this.go(now);
                 break;
         }
     }
@@ -88,9 +104,10 @@ class Palette {
     go () { // 前进
 
     }
-    draw(type, color) { // 绘制
-        this.drawType = type; // 绘制形状
+    changeWay(type, color, lineWidth) { // 绘制条件
+        this.drawType = type !== 'color' && type; // 绘制形状
         this.drawColor = color; // 绘制颜色
+        this.lineWidth = lineWidth; // 线宽
     }
 }
 export {

@@ -1,6 +1,21 @@
 <template>
     <div class="demo">
         <div class="rtcBox">
+            <ul>
+                <li v-for="v in handleList" :key="v.type">
+                    <el-color-picker v-model="color" show-alpha v-if="v.type === 'color'" @change="colorChange"></el-color-picker>
+                    <button :disabled="allowHangup" @click="handleClick(v)" v-if="!['color', 'lineWidth'].includes(v.type)" :class="{active: currHandle === v.type}">{{v.name}}</button>
+                    <el-popover
+                            placement="top"
+                            width="400"
+                            trigger="click"
+                            v-if="v.type === 'lineWidth'"
+                    >
+                        <el-slider v-model="lineWidth" :max=20 @change="lineWidthChange"></el-slider>
+                        <button slot="reference" :disabled="allowHangup">{{v.name}}</button>
+                    </el-popover>
+                </li>
+            </ul>
             <div>
                 <canvas width="400" height="300" ref="canvas"></canvas>
                 <h5>白板操作</h5>
@@ -29,10 +44,35 @@
                     offerToReceiveVideo: 1
                 },
                 allowCall: true,
-                allowHangup: true
+                allowHangup: true,
+                handleList: [
+                    {name: '圆', type: 'arc'},
+                    {name: '线条', type: 'line'},
+                    {name: '矩形', type: 'rect'},
+                    {name: '多边形', type: 'poly'},
+                    {name: '橡皮擦', type: 'eraser'},
+                    {name: '撤回', type: 'cancel'},
+                    {name: '前进', type: 'go'},
+                    {name: '线宽', type: 'lineWidth'},
+                    {name: '颜色', type: 'color'}
+                ],
+                color: 'rgba(19, 206, 102, 1)',
+                currHandle: 'line',
+                lineWidth: 10
             }
         },
         methods: {
+            colorChange() {
+                this.palette.changeWay(this.currHandle, this.color, this.lineWidth);
+            },
+            lineWidthChange() {
+                this.palette.changeWay(this.currHandle, this.color, this.lineWidth);
+            },
+            handleClick(v) {
+                this.palette.changeWay(v.type, this.color, this.lineWidth);
+                if (['color', 'cancel', 'go', 'lineWidth'].includes(v.type)) return;
+                this.currHandle = v.type;
+            },
             start() {
                 this.state = '2';
                 this.newRecognition.start();
@@ -61,7 +101,14 @@
                 this.peerA = null;
                 this.peerB = null;
                 this.allowCall = false;
-                this.allowHangup = true
+                this.allowHangup = true;
+                let paint = this.$refs['canvas'].getContext('2d');
+                paint.clearRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height);
+            },
+            initCanvas() {
+                let paint = this.$refs['canvas'].getContext('2d');
+                paint.fillStyle = '#fff';
+                paint.fillRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height);
             },
             async onCreateOffer(desc) {
                 try {
@@ -111,7 +158,7 @@
                     console.log('event-stream', event.stream);
                     let video = document.querySelector('#rtcB');
                     video.srcObject = event.stream;
-                    this.palette = new Palette(this.$refs['canvas']);
+                    this.initCanvas();
                 };
                 // 监听 B 的ICE候选信息
                 // 如果收集到，就添加给 A
@@ -126,6 +173,7 @@
                 // 保存本地流到全局
                 this.localstream = this.$refs['canvas'].captureStream();
                 this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
+                this.palette = new Palette(this.$refs['canvas']);
             }
         },
         mounted() {
@@ -137,7 +185,7 @@
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
     .rtcBox{
         display: flex;
         justify-content: center;
@@ -150,6 +198,9 @@
         }
         canvas{
             border: 1px solid #000;
+        }
+        ul{
+            text-align: left;
         }
     }
 </style>
