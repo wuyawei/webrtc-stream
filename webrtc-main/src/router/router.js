@@ -50,6 +50,11 @@ export default new Router({
             path: '/palette',
             name: 'palette',
             component: _import('webrtc/palette')
+        },
+        {
+            path: '/whiteboard',
+            name: 'whiteboard',
+            component: _import('webrtc/whiteboard')
         }
     ],
 });

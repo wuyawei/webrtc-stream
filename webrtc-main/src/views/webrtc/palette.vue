@@ -1,6 +1,6 @@
 <template>
     <div class="palette">
-
+        <canvas id="canvas"></canvas>
     </div>
 </template>
 
