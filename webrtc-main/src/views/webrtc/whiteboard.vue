@@ -17,6 +17,7 @@
 </template>
 
 <script>
+    import {Palette} from '../../utils/palette';
     export default {
         name: 'whiteboard',
         data() {
@@ -110,6 +111,7 @@
                     console.log('event-stream', event.stream);
                     let video = document.querySelector('#rtcB');
                     video.srcObject = event.stream;
+                    this.palette = new Palette(this.$refs['canvas']);
                 };
                 // 监听 B 的ICE候选信息
                 // 如果收集到，就添加给 A
@@ -123,17 +125,6 @@
             async createMedia() {
                 // 保存本地流到全局
                 this.localstream = this.$refs['canvas'].captureStream();
-                var paint = this.$refs['canvas'].getContext('2d');
-                paint.fillStyle = 'red';
-                paint.fillRect(0, 0, 100, 100);
-                setTimeout(_ => {
-                    paint.fillStyle = 'yellow';
-                    paint.fillRect(0, 100, 100, 100);
-                }, 1000);
-                setTimeout(_ => {
-                    paint.fillStyle = '#fff';
-                    paint.fillRect(100, 100, 100, 100);
-                }, 2000);
                 this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
             }
         },
@@ -155,6 +146,7 @@
             height: 300px;
             margin-left: 20px;
             background-color: #ddd;
+            border: 1px solid #000;
         }
         canvas{
             border: 1px solid #000;
