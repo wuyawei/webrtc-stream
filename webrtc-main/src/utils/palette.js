@@ -2,7 +2,7 @@
  * Created by wyw on 2019/3/28.
  */
 class Palette {
-    constructor(canvas, {drawType = 'line', drawColor = 'rgba(19, 206, 102, 1)', lineWidth = 5, allowCallback}) {
+    constructor(canvas, {drawType = 'line', drawColor = 'rgba(19, 206, 102, 1)', lineWidth = 5, sides = 3, allowCallback}) {
         this.canvas = canvas;
         this.width = canvas.width; // 宽
         this.height = canvas.height; // 高
@@ -16,6 +16,7 @@ class Palette {
         this.drawType = drawType; // 绘制形状
         this.drawColor = drawColor; // 绘制颜色
         this.lineWidth = lineWidth; // 线条宽度
+        this.sides = sides; // 多边形边数
         this.bindCall = function () {}; // 解决 eventlistener 不能bind
         this.allowCallback = allowCallback || function () {}; // 允许操作的回调
         this.init();
@@ -52,7 +53,7 @@ class Palette {
     reSetImage() { // 重置为上一帧
         this.paint.clearRect(0, 0, this.width, this.height);
         if(this.imgData.length >= 1){
-            this.paint.putImageData(this.imgData[this.imgData.length-1], 0, 0);
+            this.paint.putImageData(this.imgData[this.index], 0, 0);
         }
     }
     onmousemove(e) { // 鼠标移动
@@ -68,14 +69,14 @@ class Palette {
             case 'rect' :
                 this.rect(width, height);
                 break;
-            case 'poly' :
-                this.poly();
+            case 'polygon' :
+                this.polygon(width, height);
                 break;
             case 'arc' :
                 this.arc(width, height);
                 break;
             case 'eraser' :
-                this.eraser();
+                this.eraser(endx, endy);
                 break;
             case 'cancel' :
                 this.cancel();
@@ -114,8 +115,19 @@ class Palette {
         this.paint.strokeStyle = this.drawColor;
         this.paint.strokeRect(this.x, this.y, width, height);
     }
-    poly() { // 绘制多边形
-
+    polygon(width, height) { // 绘制多边形
+        this.reSetImage();
+        let n = this.sides;
+        let ran = 360 / n;
+        let rn = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
+        this.paint.beginPath();
+        this.paint.strokeStyle = this.drawColor;
+        this.paint.lineWidth = this.lineWidth;
+        for(let i=0; i < n; i++){
+            this.paint.lineTo(this.x + Math.sin((i * ran + 45) * Math.PI / 180) * rn, this.y + Math.cos((i * ran + 45) * Math.PI / 180) * rn);
+        }
+        this.paint.closePath();
+        this.paint.stroke();
     }
     arc(width, height) { // 绘制圆形
         this.reSetImage();
@@ -127,8 +139,16 @@ class Palette {
         this.paint.closePath();
         this.paint.stroke();
     }
-    eraser() { // 橡皮擦
-
+    eraser(endx, endy) { // 橡皮擦
+        this.paint.save();
+        this.paint.beginPath();
+        this.paint.arc(endx, endy, this.lineWidth / 2, 0, 2 * Math.PI);
+        this.paint.closePath();
+        this.paint.clip();
+        this.paint.clearRect(0, 0, this.width, this.height);
+        this.paint.fillStyle = '#fff';
+        this.paint.fillRect(0, 0, this.width, this.height);
+        this.paint.restore();
     }
     cancel() { // 撤回
         if (--this.index <0) {
@@ -153,10 +173,11 @@ class Palette {
         this.paint.fillRect(0, 0, this.width, this.height);
         this.gatherImage();
     }
-    changeWay(type, color, lineWidth) { // 绘制条件
-        this.drawType = type !== 'color' && type; // 绘制形状
-        this.drawColor = color; // 绘制颜色
-        this.lineWidth = lineWidth; // 线宽
+    changeWay({type, color, lineWidth, sides}) { // 绘制条件
+        this.drawType = type !== 'color' && type || this.drawType; // 绘制形状
+        this.drawColor = color || this.drawColor; // 绘制颜色
+        this.lineWidth = lineWidth || this.lineWidth; // 线宽
+        this.sides = sides || this.sides; // 边数
     }
 }
 export {

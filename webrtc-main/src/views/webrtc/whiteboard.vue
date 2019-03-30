@@ -3,16 +3,25 @@
         <div class="rtcBox">
             <ul>
                 <li v-for="v in handleList" :key="v.type">
-                    <el-color-picker v-model="color" show-alpha v-if="v.type === 'color'" @change="colorChange"></el-color-picker>
+                    <el-color-picker v-model="color" show-alpha v-if="v.type === 'color'" @change="colorChange" :disabled="allowHangup"></el-color-picker>
                     <button :disabled="v.type === 'cancel' ? allowHangup || allowCancel:
                             v.type === 'go' ? allowHangup || allowGo
                             :allowHangup"
                             @click="handleClick(v)"
-                            v-if="!['color', 'lineWidth'].includes(v.type)"
+                            v-if="!['color', 'lineWidth', 'polygon'].includes(v.type)"
                             :class="{active: currHandle === v.type}"
                     >
                         {{v.name}}
                     </button>
+                    <el-popover
+                            placement="top"
+                            width="400"
+                            trigger="click"
+                            v-if="v.type === 'polygon'"
+                    >
+                        <el-input-number v-model="sides" controls-position="right" @change="sidesChange" :min="3" :max="10"></el-input-number>
+                        <button slot="reference" :disabled="allowHangup" @click="handleClick(v)" :class="{active: currHandle === v.type}">{{v.name}}</button>
+                    </el-popover>
                     <el-popover
                             placement="top"
                             width="400"
@@ -57,7 +66,7 @@
                     {name: '圆', type: 'arc'},
                     {name: '线条', type: 'line'},
                     {name: '矩形', type: 'rect'},
-                    {name: '多边形', type: 'poly'},
+                    {name: '多边形', type: 'polygon'},
                     {name: '橡皮擦', type: 'eraser'},
                     {name: '撤回', type: 'cancel'},
                     {name: '前进', type: 'go'},
@@ -70,27 +79,30 @@
                 lineWidth: 5,
                 palette: null, // 画板
                 allowCancel: true,
-                allowGo: true
+                allowGo: true,
+                sides: 3
             }
         },
         methods: {
             allowCallback(cancel, go) {
-                console.log(go);
                 this.allowCancel = !cancel;
                 this.allowGo = !go;
             },
+            sidesChange() {
+                this.palette.changeWay({sides: this.sides});
+            },
             colorChange() {
-                this.palette.changeWay(this.currHandle, this.color, this.lineWidth);
+                this.palette.changeWay({color: this.color});
             },
             lineWidthChange() {
-                this.palette.changeWay(this.currHandle, this.color, this.lineWidth);
+                this.palette.changeWay({lineWidth: this.lineWidth});
             },
             handleClick(v) {
                 if (['cancel', 'go', 'clear'].includes(v.type)) {
                     this.palette[v.type]();
                     return;
                 }
-                this.palette.changeWay(v.type, this.color, this.lineWidth);
+                this.palette.changeWay({type: v.type});
                 if (['color', 'lineWidth'].includes(v.type)) return;
                 this.currHandle = v.type;
             },
