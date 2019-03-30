@@ -135,7 +135,7 @@
                 this.peerB = null;
                 this.allowCall = false;
                 this.allowHangup = true;
-                this.palette.clear();
+                this.palette.destroy();
                 this.palette = null;
             },
             async onCreateOffer(desc) {

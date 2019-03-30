@@ -17,7 +17,9 @@ class Palette {
         this.drawColor = drawColor; // 绘制颜色
         this.lineWidth = lineWidth; // 线条宽度
         this.sides = sides; // 多边形边数
-        this.bindCall = function () {}; // 解决 eventlistener 不能bind
+        this.bindMousemove = function () {}; // 解决 eventlistener 不能bind
+        this.bindMousedown = function () {}; // 解决 eventlistener 不能bind
+        this.bindMouseup = function () {}; // 解决 eventlistener 不能bind
         this.allowCallback = allowCallback || function () {}; // 允许操作的回调
         this.init();
     }
@@ -25,11 +27,13 @@ class Palette {
         this.paint.fillStyle = '#fff';
         this.paint.fillRect(0, 0, this.width, this.height);
         this.gatherImage();
-        this.canvas.addEventListener('mousedown', this.mousedown.bind(this));
-        document.addEventListener('mouseup', this.onmouseup.bind(this));
-        this.bindCall = this.onmousemove.bind(this); // 解决 eventlistener 不能bind
+        this.bindMousemove = this.onmousemove.bind(this); // 解决 eventlistener 不能bind
+        this.bindMousedown = this.onmousedown.bind(this);
+        this.bindMouseup = this.onmouseup.bind(this);
+        this.canvas.addEventListener('mousedown', this.bindMousedown);
+        document.addEventListener('mouseup', this.bindMouseup);
     }
-    mousedown(e) { // 鼠标按下
+    onmousedown(e) { // 鼠标按下
         this.isClickCanvas = true;
         this.x = e.offsetX;
         this.y = e.offsetY;
@@ -41,7 +45,7 @@ class Palette {
             this.paint.fillStyle = this.drawColor;
             this.paint.fill();
         }
-        this.canvas.addEventListener('mousemove', this.bindCall);
+        this.canvas.addEventListener('mousemove', this.bindMousemove);
     }
     gatherImage() { // 采集图像
         this.imgData = this.imgData.slice(0, this.index + 1); // 每次鼠标抬起时，将储存的imgdata截取至index处
@@ -92,7 +96,7 @@ class Palette {
     onmouseup() { // 鼠标抬起
         if (this.isClickCanvas) {
             this.isClickCanvas = false;
-            this.canvas.removeEventListener('mousemove', this.bindCall);
+            this.canvas.removeEventListener('mousemove', this.bindMousemove);
             this.gatherImage();
         }
     }
@@ -178,6 +182,13 @@ class Palette {
         this.drawColor = color || this.drawColor; // 绘制颜色
         this.lineWidth = lineWidth || this.lineWidth; // 线宽
         this.sides = sides || this.sides; // 边数
+    }
+    destroy() {
+        this.clear();
+        this.canvas.removeEventListener('mousedown', this.bindMousedown);
+        document.removeEventListener('mouseup', this.bindMouseup);
+        this.canvas = null;
+        this.paint = null;
     }
 }
 export {
