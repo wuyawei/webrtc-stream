@@ -84,6 +84,14 @@
             }
         },
         methods: {
+            initPalette() {
+                this.palette = new Palette(this.$refs['canvas'], {
+                    drawColor: this.color,
+                    drawType: this.currHandle,
+                    lineWidth: this.lineWidth,
+                    allowCallback: this.allowCallback
+                });
+            },
             allowCallback(cancel, go) {
                 this.allowCancel = !cancel;
                 this.allowGo = !go;
@@ -186,7 +194,7 @@
 //                    console.log('event-stream', event.stream);
                     let video = document.querySelector('#rtcB');
                     video.srcObject = event.stream;
-                    this.initPalette();
+                    this.initPalette(); // 初始化画板
                 };
                 // 监听 B 的ICE候选信息
                 // 如果收集到，就添加给 A
@@ -201,14 +209,6 @@
                 // 保存本地流到全局
                 this.localstream = this.$refs['canvas'].captureStream();
                 this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
-            },
-            initPalette() {
-                this.palette = new Palette(this.$refs['canvas'], {
-                    drawColor: this.color,
-                    drawType: this.currHandle,
-                    lineWidth: this.lineWidth,
-                    allowCallback: this.allowCallback
-                });
             }
         },
         mounted() {
