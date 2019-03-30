@@ -4,7 +4,15 @@
             <ul>
                 <li v-for="v in handleList" :key="v.type">
                     <el-color-picker v-model="color" show-alpha v-if="v.type === 'color'" @change="colorChange"></el-color-picker>
-                    <button :disabled="allowHangup" @click="handleClick(v)" v-if="!['color', 'lineWidth'].includes(v.type)" :class="{active: currHandle === v.type}">{{v.name}}</button>
+                    <button :disabled="v.type === 'cancel' ? allowHangup || allowCancel:
+                            v.type === 'go' ? allowHangup || allowGo
+                            :allowHangup"
+                            @click="handleClick(v)"
+                            v-if="!['color', 'lineWidth'].includes(v.type)"
+                            :class="{active: currHandle === v.type}"
+                    >
+                        {{v.name}}
+                    </button>
                     <el-popover
                             placement="top"
                             width="400"
@@ -12,7 +20,7 @@
                             v-if="v.type === 'lineWidth'"
                     >
                         <el-slider v-model="lineWidth" :max=20 @change="lineWidthChange"></el-slider>
-                        <button slot="reference" :disabled="allowHangup">{{v.name}}</button>
+                        <button slot="reference" :disabled="allowHangup">{{v.name}} <i>{{lineWidth + 'px'}}</i></button>
                     </el-popover>
                 </li>
             </ul>
@@ -53,15 +61,24 @@
                     {name: '橡皮擦', type: 'eraser'},
                     {name: '撤回', type: 'cancel'},
                     {name: '前进', type: 'go'},
+                    {name: '清屏', type: 'clear'},
                     {name: '线宽', type: 'lineWidth'},
                     {name: '颜色', type: 'color'}
                 ],
                 color: 'rgba(19, 206, 102, 1)',
                 currHandle: 'line',
-                lineWidth: 10
+                lineWidth: 5,
+                palette: null, // 画板
+                allowCancel: true,
+                allowGo: true
             }
         },
         methods: {
+            allowCallback(cancel, go) {
+                console.log(go);
+                this.allowCancel = !cancel;
+                this.allowGo = !go;
+            },
             colorChange() {
                 this.palette.changeWay(this.currHandle, this.color, this.lineWidth);
             },
@@ -69,8 +86,12 @@
                 this.palette.changeWay(this.currHandle, this.color, this.lineWidth);
             },
             handleClick(v) {
+                if (['cancel', 'go', 'clear'].includes(v.type)) {
+                    this.palette[v.type]();
+                    return;
+                }
                 this.palette.changeWay(v.type, this.color, this.lineWidth);
-                if (['color', 'cancel', 'go', 'lineWidth'].includes(v.type)) return;
+                if (['color', 'lineWidth'].includes(v.type)) return;
                 this.currHandle = v.type;
             },
             start() {
@@ -102,13 +123,8 @@
                 this.peerB = null;
                 this.allowCall = false;
                 this.allowHangup = true;
-                let paint = this.$refs['canvas'].getContext('2d');
-                paint.clearRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height);
-            },
-            initCanvas() {
-                let paint = this.$refs['canvas'].getContext('2d');
-                paint.fillStyle = '#fff';
-                paint.fillRect(0, 0, this.$refs['canvas'].width, this.$refs['canvas'].height);
+                this.palette.clear();
+                this.palette = null;
             },
             async onCreateOffer(desc) {
                 try {
@@ -155,10 +171,10 @@
                 // 创建呼叫端
                 this.peerB = new PeerConnection();
                 this.peerB.onaddstream = (event) => { // 监听是否有媒体流接入，如果有就赋值给 rtcB 的 src
-                    console.log('event-stream', event.stream);
+//                    console.log('event-stream', event.stream);
                     let video = document.querySelector('#rtcB');
                     video.srcObject = event.stream;
-                    this.initCanvas();
+                    this.initPalette();
                 };
                 // 监听 B 的ICE候选信息
                 // 如果收集到，就添加给 A
@@ -173,7 +189,14 @@
                 // 保存本地流到全局
                 this.localstream = this.$refs['canvas'].captureStream();
                 this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
-                this.palette = new Palette(this.$refs['canvas']);
+            },
+            initPalette() {
+                this.palette = new Palette(this.$refs['canvas'], {
+                    drawColor: this.color,
+                    drawType: this.currHandle,
+                    lineWidth: this.lineWidth,
+                    allowCallback: this.allowCallback
+                });
             }
         },
         mounted() {

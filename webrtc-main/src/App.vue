@@ -30,6 +30,9 @@
     border-radius: 3px;
     cursor: pointer;
     margin: 5px;
+    i{
+      font-size: 12px;
+    }
   }
   button:active{
     background-color: #6ddcff;
