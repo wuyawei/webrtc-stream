@@ -63,25 +63,35 @@ class Palette {
         let height = endy - this.y;
         let now = [endx, endy]; // 当前移动到的位置
         switch (this.drawType) {
-            case 'line' :
-                this.moveCallback('line', this.last, now, this.lineWidth, this.drawColor);
-                this.line(this.last, now, this.lineWidth, this.drawColor);
+            case 'line' : {
+                let params = [this.last, now, this.lineWidth, this.drawColor];
+                this.moveCallback('line', ...params);
+                this.line(...params);
+            }
                 break;
-            case 'rect' :
-                this.moveCallback('rect', this.x, this.y, width, height, this.lineWidth, this.drawColor);
-                this.rect(this.x, this.y, width, height, this.lineWidth, this.drawColor);
+            case 'rect' : {
+                let params = [this.x, this.y, width, height, this.lineWidth, this.drawColor];
+                this.moveCallback('rect', ...params);
+                this.rect(...params);
+            }
                 break;
-            case 'polygon' :
-                this.moveCallback('polygon', this.x, this.y, this.sides, width, height, this.lineWidth, this.drawColor);
-                this.polygon(this.x, this.y, this.sides, width, height, this.lineWidth, this.drawColor);
+            case 'polygon' : {
+                let params = [this.x, this.y, this.sides, width, height, this.lineWidth, this.drawColor];
+                this.moveCallback('polygon', ...params);
+                this.polygon(...params);
+            }
                 break;
-            case 'arc' :
-                this.moveCallback('arc', this.x, this.y, width, height, this.lineWidth, this.drawColor);
-                this.arc(this.x, this.y, width, height, this.lineWidth, this.drawColor);
+            case 'arc' : {
+                let params = [this.x, this.y, width, height, this.lineWidth, this.drawColor];
+                this.moveCallback('arc', ...params);
+                this.arc(...params);
+            }
                 break;
-            case 'eraser' :
-                this.moveCallback('eraser', endx, endy, width, height, this.lineWidth);
-                this.eraser(endx, endy, width, height, this.lineWidth);
+            case 'eraser' : {
+                let params = [endx, endy, this.width, this.height, this.lineWidth];
+                this.moveCallback('eraser', ...params);
+                this.eraser(...params);
+            }
                 break;
         }
     }
@@ -97,7 +107,6 @@ class Palette {
         }
     }
     line(last, now, lineWidth, drawColor) { // 绘制线性
-        console.log(last, now, lineWidth, drawColor);
         this.paint.beginPath();
         this.paint.lineCap = "round"; // 设定线条与线条间接合处的样式
         this.paint.lineJoin = "round";

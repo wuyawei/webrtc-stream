@@ -197,6 +197,8 @@
                             this.isCall = data.self;
                             // 对方同意之后创建自己的 peer
                             await this.createP2P(data);
+                            // 建立DataChannel
+                            await this.createDataChannel();
                             // 并给对方发送 offer
                             this.createOffer(data);
                             break;
@@ -327,7 +329,6 @@
             },
             async createOffer(data) { // 建立DataChannel，创建并发送 offer
                 try {
-                    await this.createDataChannel(); // 建立DataChannel
                     // 创建offer
                     let offer = await this.peer.createOffer(this.offerOption);
                     // 呼叫端设置本地 offer 描述
