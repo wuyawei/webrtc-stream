@@ -1,29 +1,47 @@
 <template>
     <div class="demo">
         <div class="rtcBox">
+            <ul>
+                <li v-for="v in handleList" :key="v.type">
+                    <el-color-picker v-model="color" show-alpha v-if="v.type === 'color'" @change="colorChange" :disabled="allowHangup"></el-color-picker>
+                    <button :disabled="v.type === 'cancel' ? allowHangup || allowCancel:
+                            v.type === 'go' ? allowHangup || allowGo
+                            :allowHangup"
+                            @click="handleClick(v)"
+                            v-if="!['color', 'lineWidth', 'polygon'].includes(v.type)"
+                            :class="{active: currHandle === v.type}"
+                    >
+                        {{v.name}}
+                    </button>
+                    <el-popover
+                            placement="top"
+                            width="400"
+                            trigger="click"
+                            v-if="v.type === 'polygon'"
+                    >
+                        <el-input-number v-model="sides" controls-position="right" @change="sidesChange" :min="3" :max="10"></el-input-number>
+                        <button slot="reference" :disabled="allowHangup" @click="handleClick(v)" :class="{active: currHandle === v.type}">{{v.name}}</button>
+                    </el-popover>
+                    <el-popover
+                            placement="top"
+                            width="400"
+                            trigger="click"
+                            v-if="v.type === 'lineWidth'"
+                    >
+                        <el-slider v-model="lineWidth" :max=20 @change="lineWidthChange"></el-slider>
+                        <button slot="reference" :disabled="allowHangup">{{v.name}} <i>{{lineWidth + 'px'}}</i></button>
+                    </el-popover>
+                </li>
+            </ul>
             <div>
-                <div class="video-box">
-                    <video src="" id="rtcA" controls autoplay></video>
-                    <h5>A</h5>
-                </div>
-                <div class="chat-box" v-show="!allowHangup && messageOpen">
-                    <h5>收消息</h5>
-                    <p>{{receiveText}}</p>
-                </div>
+                <canvas width="400" height="300" ref="canvas"></canvas>
+                <h5>白板操作</h5>
             </div>
             <div>
-                <div class="video-box">
-                    <video src="" id="rtcB" controls autoplay></video>
-                    <h5>B</h5>
-                    <button @click="call" :disabled="allowCall">call</button>
-                    <button @click="hangup" :disabled="allowHangup">hangup</button>
-                </div>
-                <div class="chat-box" v-show="!allowHangup && messageOpen">
-                    <h5>发消息</h5>
-                    <textarea v-model="sendText"></textarea>
-                    <br>
-                    <button @click="send">发送</button>
-                </div>
+                <video src="" id="rtcB" playsinline autoplay></video>
+                <h5>演示画面</h5>
+                <button @click="call" :disabled="allowCall">call</button>
+                <button @click="hangup" :disabled="allowHangup">hangup</button>
             </div>
         </div>
 
@@ -31,29 +49,70 @@
 </template>
 
 <script>
+    import {Palette} from '../../utils/palette';
     export default {
-        name: 'local1',
+        name: 'whiteboard',
         data() {
             return {
                 peerA: null,
                 peerB: null,
-                channelA: null,
-                channelB: null,
                 offerOption: {
                     offerToReceiveAudio: 1,
                     offerToReceiveVideo: 1
                 },
                 allowCall: true,
                 allowHangup: true,
-                messageOpen: false,
-                sendText: '',
-                receiveText: ''
+                handleList: [
+                    {name: '圆', type: 'arc'},
+                    {name: '线条', type: 'line'},
+                    {name: '矩形', type: 'rect'},
+                    {name: '多边形', type: 'polygon'},
+                    {name: '橡皮擦', type: 'eraser'},
+                    {name: '撤回', type: 'cancel'},
+                    {name: '前进', type: 'go'},
+                    {name: '清屏', type: 'clear'},
+                    {name: '线宽', type: 'lineWidth'},
+                    {name: '颜色', type: 'color'}
+                ],
+                color: 'rgba(19, 206, 102, 1)',
+                currHandle: 'line',
+                lineWidth: 5,
+                palette: null, // 画板
+                allowCancel: true,
+                allowGo: true,
+                sides: 3
             }
         },
         methods: {
-            send() {
-                this.channelB.send(JSON.stringify({name: this.sendText}));
-                this.sendText = '';
+            initPalette() {
+                this.palette = new Palette(this.$refs['canvas'], {
+                    drawColor: this.color,
+                    drawType: this.currHandle,
+                    lineWidth: this.lineWidth,
+                    allowCallback: this.allowCallback
+                });
+            },
+            allowCallback(cancel, go) {
+                this.allowCancel = !cancel;
+                this.allowGo = !go;
+            },
+            sidesChange() {
+                this.palette.changeWay({sides: this.sides});
+            },
+            colorChange() {
+                this.palette.changeWay({color: this.color});
+            },
+            lineWidthChange() {
+                this.palette.changeWay({lineWidth: this.lineWidth});
+            },
+            handleClick(v) {
+                if (['cancel', 'go', 'clear'].includes(v.type)) {
+                    this.palette[v.type]();
+                    return;
+                }
+                this.palette.changeWay({type: v.type});
+                if (['color', 'lineWidth'].includes(v.type)) return;
+                this.currHandle = v.type;
             },
             start() {
                 this.state = '2';
@@ -80,16 +139,12 @@
             hangup() {
                 this.peerA.close();
                 this.peerB.close();
-                this.channelA.close();
-                this.channelB.close();
                 this.peerA = null;
                 this.peerB = null;
-                this.channelA = null;
-                this.channelB = null;
-                this.sendText = '';
-                this.receiveText = '';
                 this.allowCall = false;
-                this.allowHangup = true
+                this.allowHangup = true;
+                this.palette.destroy();
+                this.palette = null;
             },
             async onCreateOffer(desc) {
                 try {
@@ -133,38 +188,13 @@
                         this.peerB.addIceCandidate(event.candidate);
                     }
                 };
-                this.peerA.ondatachannel = (event) => {
-                    console.log(event);
-                    this.channelA = event.channel;
-                    this.channelA.binaryType = 'arraybuffer'
-﻿                    this.channelA.onopen = (e) => {
-                        console.log('channelA onopen', e);
-                    };
-                    this.channelA.onclose = (e) => {
-                        console.log('channelA onclose', e);
-                    };
-                    this.channelA.onmessage = (e) => {
-                        this.receiveText = JSON.parse(e.data).name;
-                        console.log('channelA onmessage', e.data);
-                    };
-                };
-//                this.channelA.send('Hi you!');
                 // 创建呼叫端
                 this.peerB = new PeerConnection();
                 this.peerB.onaddstream = (event) => { // 监听是否有媒体流接入，如果有就赋值给 rtcB 的 src
-                    console.log('event-stream', event);
+//                    console.log('event-stream', event.stream);
                     let video = document.querySelector('#rtcB');
                     video.srcObject = event.stream;
-                };
-                this.channelB = this.peerB.createDataChannel('messagechannel');
-                console.log('this.channelB', this.channelB);
-                this.channelB.binaryType = 'arraybuffer';
-                this.channelB.onopen = (event) => {
-                    console.log('channelB onopen', event);
-                    this.messageOpen = true;
-                };
-                this.channelB.onclose = function(event) {
-                    console.log('channelB onclose', event)
+                    this.initPalette(); // 初始化画板
                 };
                 // 监听 B 的ICE候选信息
                 // 如果收集到，就添加给 A
@@ -177,11 +207,7 @@
             },
             async createMedia() {
                 // 保存本地流到全局
-                this.localstream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                // console.log(this.localstream);
-                // console.log(this.localstream.getVideoTracks(), this.localstream.getAudioTracks());
-                let video = document.querySelector('#rtcA');
-                video.srcObject = this.localstream;
+                this.localstream = this.$refs['canvas'].captureStream();
                 this.initPeer(); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
             }
         },
@@ -194,32 +220,22 @@
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
     .rtcBox{
         display: flex;
         justify-content: center;
-        .video-box{
-            height: 380px;
-            border-bottom: 1px solid #1fbeca;
-            margin-bottom: 10px;
-        }
         video{
             width: 400px;
             height: 300px;
             margin-left: 20px;
             background-color: #ddd;
+            border: 1px solid #000;
         }
-        .chat-box{
-            text-align: center;
-            h5{
-                margin-bottom: 10px;
-            }
-            p,textarea{
-                width: 240px;
-                height: 60px;
-                border: 1px solid #000;
-                display: inline-block;
-            }
+        canvas{
+            border: 1px solid #000;
+        }
+        ul{
+            text-align: left;
         }
     }
 </style>

@@ -22,29 +22,72 @@
                 <span @click="apply(v.account)" v-if="v.account !== account && v.account !== isCall">呼叫 {{v.account}}</span>
             </p>
         </div>
-        <div class="video-container" v-show="isToPeer">
+        <div class="video-container">
             <div>
-                <video src="" id="rtcA" controls autoplay></video>
-                <h5>{{account}}</h5>
-                <button @click="hangup">hangup</button>
+                <ul>
+                    <li v-for="v in handleList" :key="v.type">
+                        <el-color-picker v-model="color" show-alpha v-if="v.type === 'color'" @change="colorChange" :disabled="!isToPeer"></el-color-picker>
+                        <button :disabled="v.type === 'cancel' ? !isToPeer || allowCancel:
+                            v.type === 'go' ? !isToPeer || allowGo
+                            :!isToPeer"
+                                @click="handleClick(v)"
+                                v-if="!['color', 'lineWidth', 'polygon'].includes(v.type)"
+                                :class="{active: currHandle === v.type}"
+                        >
+                            {{v.name}}
+                    </button>
+                        <el-popover
+                                placement="top"
+                                width="400"
+                                trigger="click"
+                                v-if="v.type === 'polygon'"
+                        >
+                            <el-input-number v-model="sides" controls-position="right" @change="sidesChange" :min="3" :max="10"></el-input-number>
+                            <button slot="reference" :disabled="!isToPeer" @click="handleClick(v)" :class="{active: currHandle === v.type}">{{v.name}}</button>
+                        </el-popover>
+                        <el-popover
+                                placement="top"
+                                width="400"
+                                trigger="click"
+                                v-if="v.type === 'lineWidth'"
+                        >
+                            <el-slider v-model="lineWidth" :max=20 @change="lineWidthChange"></el-slider>
+                            <button slot="reference" :disabled="!isToPeer">{{v.name}} <i>{{lineWidth + 'px'}}</i></button>
+                        </el-popover>
+                    </li>
+                </ul>
+                <div>
+                    <h5>画板</h5>
+                    <canvas width="400" height="300" ref="canvas"></canvas>
+                </div>
             </div>
             <div>
-                <video src="" id="rtcB" controls autoplay></video>
-                <h5>{{isCall}}</h5>
+                <h5>聊天</h5>
+                <div class="chat">
+                    <div class="message" v-for="(v, i) in messageList" :key="i">
+                        <p>
+                            {{v.account}} - {{v.time}}
+                        </p>
+                        <p class="mes">{{v.mes}}</p>
+                    </div>
+                </div>
+                <textarea v-model="sendText"></textarea> <br>
+                <button :disabled="!isToPeer" @click="send(['text'])">发送</button>
             </div>
         </div>
     </div>
 </template>
 <script>
     import socket from '../../utils/socket';
+    import {Palette} from '../../utils/palette';
     export default{
-        name: 'remote1',
+        name: 'palette',
         data() {
             return {
                 account: window.sessionStorage.account || '',
                 isJoin: false,
                 userList: [],
-                roomid: 'webrtc_1v1', // 指定房间ID
+                roomid: 'palette', // 指定房间ID
                 isCall: false, // 正在通话的对象
                 loading: false,
                 loadingText: '呼叫中',
@@ -53,10 +96,89 @@
                 offerOption: {
                     offerToReceiveAudio: 1,
                     offerToReceiveVideo: 1
-                }
+                },
+                handleList: [
+                    {name: '圆', type: 'arc'},
+                    {name: '线条', type: 'line'},
+                    {name: '矩形', type: 'rect'},
+                    {name: '多边形', type: 'polygon'},
+                    {name: '橡皮擦', type: 'eraser'},
+                    {name: '撤回', type: 'cancel'},
+                    {name: '前进', type: 'go'},
+                    {name: '清屏', type: 'clear'},
+                    {name: '线宽', type: 'lineWidth'},
+                    {name: '颜色', type: 'color'}
+                ],
+                color: 'rgba(19, 206, 102, 1)',
+                currHandle: 'line',
+                lineWidth: 5,
+                palette: null, // 画板
+                allowCancel: true,
+                allowGo: true,
+                sides: 3,
+                channel: null,
+                messageList: [],
+                sendText: ''
             };
         },
         methods: {
+            formatTime(date) {
+                const hour = date.getHours();
+                const minute = date.getMinutes();
+                const second = date.getSeconds();
+                return [hour, minute, second].map(this.formatNumber).join(':');
+            },
+            formatNumber(n) {
+                n = n.toString();
+                return n[1] ? n : '0' + n;
+            },
+            send(arr) { // 发送消息
+                if (arr[0] === 'text') {
+                    let params = {account: this.account, time: this.formatTime(new Date()), mes: this.sendText, type: 'text'};
+                    this.channel.send(JSON.stringify(params));
+                    this.messageList.push(params);
+                    this.sendText = '';
+                } else {
+                    console.log('send', arr);
+                    this.channel.send(JSON.stringify(arr));
+                }
+            },
+            initPalette() {
+                this.palette = new Palette(this.$refs['canvas'], {
+                    drawColor: this.color,
+                    drawType: this.currHandle,
+                    lineWidth: this.lineWidth,
+                    allowCallback: this.allowCallback,
+                    moveCallback: this.moveCallback
+                });
+            },
+            moveCallback(...arr) { // 同步到对方
+                // console.log('moveCallback', arr);
+                this.send(arr);
+            },
+            allowCallback(cancel, go) {
+                this.allowCancel = !cancel;
+                this.allowGo = !go;
+            },
+            sidesChange() { // 改变多边形边数
+                this.palette.changeWay({sides: this.sides});
+            },
+            colorChange() { // 改变颜色
+                this.palette.changeWay({color: this.color});
+            },
+            lineWidthChange() { // 改变线宽
+                this.palette.changeWay({lineWidth: this.lineWidth});
+            },
+            handleClick(v) { // 操作按钮
+                if (['cancel', 'go', 'clear'].includes(v.type)) {
+                    this.moveCallback(v.type);
+                    this.palette[v.type]();
+                    return;
+                }
+                this.palette.changeWay({type: v.type});
+                if (['color', 'lineWidth'].includes(v.type)) return;
+                this.currHandle = v.type;
+            },
             join() {
                 if (!this.account) return;
                 this.isJoin = true;
@@ -69,12 +191,14 @@
                 });
                 socket.on('reply', async data =>{ // 收到回复
                     this.loading = false;
-                    console.log(data);
+                    // console.log(data);
                     switch (data.type) {
                         case '1': // 同意
                             this.isCall = data.self;
                             // 对方同意之后创建自己的 peer
                             await this.createP2P(data);
+                            // 建立DataChannel
+                            await this.createDataChannel();
                             // 并给对方发送 offer
                             this.createOffer(data);
                             break;
@@ -103,6 +227,7 @@
                         type: 'warning'
                     }).then(async () => {
                         await this.createP2P(data); // 同意之后创建自己的 peer 等待对方的 offer
+                        await this.onDataChannel(); // 接收 DataChannel
                         this.isCall = data.self;
                         this.reply(data.self, '1');
                     }).catch(() => {
@@ -119,20 +244,24 @@
                     this.onOffer(data);
                 });
                 socket.on('1v1hangup', _ =>{ // 通话挂断
+                    this.clearState();
                     this.$message({
                         message: '对方已断开连接！',
                         type: 'warning'
                     });
-                    this.peer.close();
-                    this.peer = null;
-                    this.isToPeer = false;
-                    this.isCall = false;
                 });
             },
             hangup() { // 挂断通话
                 socket.emit('1v1hangup', {account: this.isCall, self: this.account});
+                this.clearState();
+            },
+            clearState() { // 清除状态
                 this.peer.close();
+                this.channel.close();
+                this.palette.destroy();
                 this.peer = null;
+                this.palette = null;
+                this.channel = null;
                 this.isToPeer = false;
                 this.isCall = false;
             },
@@ -148,38 +277,57 @@
             async createP2P(data) {
                 this.loading = true;
                 this.loadingText = '正在建立通话连接';
-                await this.createMedia(data);
+                await this.initPeer(data); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
             },
-            async createMedia(data) {
-                // 保存本地流到全局
-                try {
-                    this.localstream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                    let video = document.querySelector('#rtcA');
-                    video.srcObject = this.localstream;
+            createDataChannel() { // 创建 DataChannel
+                try{
+                    this.channel = this.peer.createDataChannel('messagechannel');
+                    this.handleChannel(this.channel);
                 } catch (e) {
-                    console.log('getUserMedia: ', e)
+                    console.log('createDataChannel:', e);
                 }
-                this.initPeer(data); // 获取到媒体流后，调用函数初始化 RTCPeerConnection
+            },
+            onDataChannel() { // 接收 DataChannel
+                this.peer.ondatachannel = (event) => {
+                    // console.log('ondatachannel', event);
+                    this.channel = event.channel;
+                    this.handleChannel(this.channel);
+                };
+            },
+            handleChannel(channel) { // 处理 channel
+                channel.binaryType = 'arraybuffer';
+                channel.onopen = (event) => { // 连接成功
+                    console.log('channel onopen', event);
+                    this.isToPeer = true; // 连接成功
+                    this.loading = false;
+                    this.initPalette();
+                };
+                channel.onclose = function(event) { // 连接关闭
+                    console.log('channel onclose', event)
+                };
+                channel.onmessage = (e) => { // 收到消息
+                    if (Array.isArray(JSON.parse(e.data))) {
+                        let [type, ...arr] = JSON.parse(e.data);
+                        // console.log('onmessage', type, arr);
+                        this.palette[type](...arr);
+                    } else {
+                        this.messageList.push(JSON.parse(e.data));
+                    }
+                    // console.log('channel onmessage', e.data);
+                };
             },
             initPeer(data) {
                 // 创建输出端 PeerConnection
                 let PeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
                 this.peer = new PeerConnection();
-                this.peer.addStream(this.localstream); // 添加本地流
                 // 监听ICE候选信息 如果收集到，就发送给对方
                 this.peer.onicecandidate = (event) => {
                     if (event.candidate) {
                         socket.emit('1v1ICE', {account: data.self, self: this.account, sdp: event.candidate});
                     }
                 };
-                this.peer.onaddstream = (event) => { // 监听是否有媒体流接入，如果有就赋值给 rtcB 的 src
-                    this.isToPeer = true;
-                    this.loading = false;
-                    let video = document.querySelector('#rtcB');
-                    video.srcObject = event.stream;
-                };
             },
-            async createOffer(data) { // 创建并发送 offer
+            async createOffer(data) { // 建立DataChannel，创建并发送 offer
                 try {
                     // 创建offer
                     let offer = await this.peer.createOffer(this.offerOption);
@@ -296,7 +444,7 @@
             }
         }
         p:last-child{
-          border-bottom: none;
+            border-bottom: none;
         }
         p:hover span{
             top:0;
@@ -305,11 +453,34 @@
     .video-container{
         display: flex;
         justify-content: center;
-        video{
-            width: 400px;
-            height: 300px;
-            margin-left: 20px;
-            background-color: #ddd;
+        >div:first-child{
+            display: flex;
+            justify-content: flex-start;
+            margin-right: 50px;
+            canvas{
+                border: 1px solid #000;
+            }
+            ul{
+                text-align: left;
+            }
+        }
+        >div:last-child{
+            .chat{
+                width:500px;
+                height: 260px;
+                border: 1px solid #000;
+                text-align: left;
+                padding: 5px;
+                box-sizing: border-box;
+                .mes{
+                    font-size: 14px;
+                }
+            }
+            textarea{
+                width:500px;
+                height: 60px;
+                resize: none;
+            }
         }
     }
 </style>

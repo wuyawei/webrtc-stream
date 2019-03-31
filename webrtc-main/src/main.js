@@ -15,8 +15,8 @@ socket.on('disconnect', ()=>{
     console.log('连接断开了');
 });
 Vue.config.productionTip = false;
-Vue.prototype.$bus = bus;
-
+// Vue.prototype.$bus = bus;
+Vue.prototype.$bus=new Vue();
 new Vue({
   router,
   store,

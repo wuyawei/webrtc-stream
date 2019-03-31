@@ -45,6 +45,16 @@ export default new Router({
             path: '/communication',
             name: 'communication',
             component: _import('communication/communication')
+        },
+        {
+            path: '/palette',
+            name: 'palette',
+            component: _import('webrtc/palette')
+        },
+        {
+            path: '/whiteboard',
+            name: 'whiteboard',
+            component: _import('webrtc/whiteboard')
         }
     ],
 });
