@@ -86,4 +86,11 @@
         border-bottom: 60px solid #fff;
         border-left: 60px solid #fff;
     }
+    .edit-div{
+        width: 200px;
+        height: 200px;
+        display: table-cell;
+        vertical-align: middle;
+        border: 1px solid #000;
+    }
 </style>
