@@ -5,6 +5,7 @@
         <div class="center">
             <div><router-link :to="{name: 'Speech'}">H5 语音识别</router-link></div>
             <div><router-link :to="{name: 'communication'}">Vue 组件间通信</router-link></div>
+            <div><router-link :to="{name: 'responsive'}">Vue 响应式原理</router-link></div>
             <div><router-link :to="{name: 'transfer'}">video 标签之间的流传输</router-link></div>
             <div><router-link :to="{name: 'local1'}">WebRTC 1 v 1 本地对等连接</router-link></div>
             <div><router-link :to="{name: 'remote1'}">WebRTC  1 v 1 网络对等连接</router-link></div>

@@ -42,11 +42,6 @@ export default new Router({
             component: _import('webrtc/remote1')
         },
         {
-            path: '/communication',
-            name: 'communication',
-            component: _import('communication/communication')
-        },
-        {
             path: '/palette',
             name: 'palette',
             component: _import('webrtc/palette')
@@ -55,6 +50,16 @@ export default new Router({
             path: '/whiteboard',
             name: 'whiteboard',
             component: _import('webrtc/whiteboard')
-        }
+        },
+        {
+            path: '/communication',
+            name: 'communication',
+            component: _import('communication/communication')
+        },
+        {
+            path: '/responsive',
+            name: 'responsive',
+            component: _import('responsive/responsive')
+        },
     ],
 });
