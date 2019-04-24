@@ -49,7 +49,7 @@
                         //绑定本地媒体流到video标签用于输出
                         myVideo.srcObject = stream;
                         this.localStream = stream;
-                        resolve(stream);
+                        resolve();
                     }, function(error){
                         reject(error);
                         // console.log(error);
@@ -157,11 +157,8 @@
                     if (data.length> 1) {
                         data.forEach(v => {
                             let obj = {};
-                            if (v.account > this.$route.params.account) {
-                                obj.account = v.account + this.$route.params.account;
-                            } else {
-                                obj.account = this.$route.params.account + v.account;
-                            }
+                            let arr = [v.account, this.$route.params.account];
+                            obj.account = arr.sort().join('-');
                             if (!this.peerList[obj.account] && v.account !== this.$route.params.account) {
                                 // console.log('obj', obj);
                                 this.getPeerConnection(obj);

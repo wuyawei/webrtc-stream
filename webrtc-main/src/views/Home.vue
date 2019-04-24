@@ -5,10 +5,11 @@
         <div class="center">
             <div><router-link :to="{name: 'Speech'}">H5 语音识别</router-link></div>
             <div><router-link :to="{name: 'communication'}">Vue 组件间通信</router-link></div>
+            <div><router-link :to="{name: 'responsive'}">Vue 响应式原理</router-link></div>
             <div><router-link :to="{name: 'transfer'}">video 标签之间的流传输</router-link></div>
             <div><router-link :to="{name: 'local1'}">WebRTC 1 v 1 本地对等连接</router-link></div>
             <div><router-link :to="{name: 'remote1'}">WebRTC  1 v 1 网络对等连接</router-link></div>
-            <!--<div><router-link :to="{name: 'many'}">多人聊天</router-link></div>-->
+            <div><router-link :to="{name: 'many'}">多人聊天</router-link></div>
             <div><router-link :to="{name: 'whiteboard'}">白板演示</router-link></div>
             <div><router-link :to="{name: 'palette'}">共享画板</router-link></div>
         </div>
@@ -85,5 +86,12 @@
         border-top: 60px solid rgba(37, 178, 94, 0.8);
         border-bottom: 60px solid #fff;
         border-left: 60px solid #fff;
+    }
+    .edit-div{
+        width: 200px;
+        height: 200px;
+        display: table-cell;
+        vertical-align: middle;
+        border: 1px solid #000;
     }
 </style>
